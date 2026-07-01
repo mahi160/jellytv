@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Broadcast</title>
+</head>
+<body>
+    <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="BroadcastConfigForm">
+                    <div class="verticalSection">
+                        <h2>Channel</h2>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ChannelName">Channel Name</label>
+                            <input is="emby-input" type="text" id="ChannelName" name="ChannelName" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="TimeZone">Time Zone (IANA name)</label>
+                            <input is="emby-input" type="text" id="TimeZone" name="TimeZone" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ScheduleDurationDays">Schedule Duration (days)</label>
+                            <input is="emby-input" type="number" id="ScheduleDurationDays" name="ScheduleDurationDays" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="RegenerationTime">Daily Regeneration Time (HH:mm)</label>
+                            <input is="emby-input" type="text" id="RegenerationTime" name="RegenerationTime" />
+                        </div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var BroadcastConfig = {
+            pluginUniqueId: 'a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b'
+        };
+
+        document.querySelector('#BroadcastConfigPage')
+            .addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(BroadcastConfig.pluginUniqueId).then(function (config) {
+                    document.querySelector('#ChannelName').value = config.ChannelName || '';
+                    document.querySelector('#TimeZone').value = config.TimeZone || '';
+                    document.querySelector('#ScheduleDurationDays').value = config.ScheduleDurationDays || 7;
+                    document.querySelector('#RegenerationTime').value = config.RegenerationTime || '04:00';
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+        document.querySelector('#BroadcastConfigForm')
+            .addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(BroadcastConfig.pluginUniqueId).then(function (config) {
+                    config.ChannelName = document.querySelector('#ChannelName').value;
+                    config.TimeZone = document.querySelector('#TimeZone').value;
+                    config.ScheduleDurationDays = parseInt(document.querySelector('#ScheduleDurationDays').value, 10);
+                    config.RegenerationTime = document.querySelector('#RegenerationTime').value;
+                    ApiClient.updatePluginConfiguration(BroadcastConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+                return false;
+            });
+    </script>
+</body>
+</html>

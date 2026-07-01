@@ -1,0 +1,16 @@
+---
+name: "Broadcast"
+guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
+version: "0.1.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+overview: "Turns your Jellyfin library into a single always-on TV channel"
+description: >
+  Jellyfin Broadcast generates a continuous programming schedule from your
+  media library and exposes it as a live channel with M3U/XMLTV support.
+category: "General"
+owner: "jellytv"
+artifacts:
+- "Jellyfin.Plugin.Broadcast.dll"
+changelog: >
+  Initial skeleton.
