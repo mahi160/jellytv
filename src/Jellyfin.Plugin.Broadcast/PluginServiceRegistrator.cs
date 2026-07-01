@@ -20,8 +20,12 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<MovieHistoryRepository>();
         serviceCollection.AddSingleton<EpisodeStateRepository>();
         serviceCollection.AddSingleton<LibraryPoolResolver>();
+        serviceCollection.AddSingleton<IMediaPoolResolver>(sp => sp.GetRequiredService<LibraryPoolResolver>());
         serviceCollection.AddSingleton<ScheduleGenerator>();
         serviceCollection.AddSingleton<ScheduleRegenerationService>();
         serviceCollection.AddSingleton<PlaybackResolver>();
+
+        // Automatic regeneration: daily via Scheduled Tasks, plus on library/settings changes (debounced).
+        serviceCollection.AddHostedService<AutoRegenerationService>();
     }
 }

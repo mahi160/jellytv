@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.Broadcast.Scheduling;
 /// Executes a Programming Block's filters against the Jellyfin library and returns the matching pool.
 /// Per ADR 0001, the pool is the intersection of what every Jellyfin user can see — no per-user personalization.
 /// </summary>
-public class LibraryPoolResolver
+public class LibraryPoolResolver : IMediaPoolResolver
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IUserManager _userManager;
@@ -27,12 +27,16 @@ public class LibraryPoolResolver
         _userManager = userManager;
     }
 
+    /// <inheritdoc />
+    public IReadOnlyList<ScheduleCandidate> GetMatchingPool(ProgrammingBlock block) =>
+        BaseItemCandidateAdapter.ToCandidates(GetMatchingItems(block));
+
     /// <summary>
-    /// Gets the pool of items matching a Programming Block's filters, visible to every user.
+    /// Gets the raw library items matching a Programming Block's filters, visible to every user.
     /// </summary>
     /// <param name="block">The Programming Block.</param>
     /// <returns>The matching items.</returns>
-    public IReadOnlyList<BaseItem> GetMatchingPool(ProgrammingBlock block)
+    public IReadOnlyList<BaseItem> GetMatchingItems(ProgrammingBlock block)
     {
         var query = RulesEngine.BuildQuery(block);
 
