@@ -145,6 +145,33 @@
                 </form>
 
                 <div class="verticalSection">
+                    <h2>Watch</h2>
+                    <p>Paste these into Jellyfin's own Live TV setup to add this channel with a guide —
+                        the API key is already included, nothing else to fill in.</p>
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="M3uUrl">M3U Playlist URL (Live TV → Tuner Devices → M3U Tuner)</label>
+                        <input is="emby-input" type="text" id="M3uUrl" readonly="readonly" />
+                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="M3uUrl">
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="XmlTvUrl">XMLTV Guide URL (Live TV → Guide Data Providers → XMLTV)</label>
+                        <input is="emby-input" type="text" id="XmlTvUrl" readonly="readonly" />
+                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="XmlTvUrl">
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="StreamUrl">Direct Stream URL (paste into VLC/any IPTV player)</label>
+                        <input is="emby-input" type="text" id="StreamUrl" readonly="readonly" />
+                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="StreamUrl">
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="verticalSection">
                     <h2>Actions</h2>
                     <button is="emby-button" type="button" id="RegenerateButton" class="raised block emby-button">
                         <span>Regenerate Schedule Now</span>
@@ -255,6 +282,13 @@
                 });
             }
 
+            function renderWatchUrls() {
+                var apiKey = ApiClient.accessToken();
+                page.querySelector('#M3uUrl').value = ApiClient.getUrl('Broadcast/m3u', { api_key: apiKey });
+                page.querySelector('#XmlTvUrl').value = ApiClient.getUrl('Broadcast/xmltv', { api_key: apiKey });
+                page.querySelector('#StreamUrl').value = ApiClient.getUrl('Broadcast/Channel/Stream', { api_key: apiKey });
+            }
+
             page.addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
@@ -264,7 +298,15 @@
                     page.querySelector('#RegenerationTime').value = config.RegenerationTime || '04:00';
                     blocks = config.Blocks || [];
                     renderBlocksTable();
+                    renderWatchUrls();
                     Dashboard.hideLoadingMsg();
+                });
+            });
+
+            page.querySelectorAll('.copyUrlButton').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input = page.querySelector('#' + btn.getAttribute('data-target'));
+                    navigator.clipboard.writeText(input.value);
                 });
             });
 

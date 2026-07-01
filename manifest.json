@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.0.0",
+        "changelog": "Config page now shows ready-to-copy M3U/XMLTV/Stream URLs (with API key included) for adding the channel to Jellyfin's own Live TV as a tuner + guide.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.0.0/Broadcast_0.2.0.0.zip",
+        "checksum": "46af25be7b1914575b5c32527518ba94",
+        "timestamp": "2026-07-01T00:00:00Z"
+      },
+      {
         "version": "0.1.0.0",
         "changelog": "Initial skeleton.",
         "targetAbi": "10.11.0.0",
