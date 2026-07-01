@@ -121,6 +121,25 @@ public class ProgramRepository
         return results;
     }
 
+    /// <summary>
+    /// Finds the first Program starting at or after the given UTC instant.
+    /// </summary>
+    /// <param name="fromUtc">Lower bound (inclusive) on start time.</param>
+    /// <returns>The next Program, or null if none is scheduled after that time.</returns>
+    public Program? GetNextAfter(DateTime fromUtc)
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, BlockName, ItemId, StartUtc, EndUtc FROM Programs WHERE StartUtc >= $from ORDER BY StartUtc LIMIT 1";
+        var param = command.CreateParameter();
+        param.ParameterName = "$from";
+        param.Value = fromUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
+        command.Parameters.Add(param);
+
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? ReadProgram(reader) : null;
+    }
+
     private static Program ReadProgram(SqliteDataReader reader)
     {
         return new Program
