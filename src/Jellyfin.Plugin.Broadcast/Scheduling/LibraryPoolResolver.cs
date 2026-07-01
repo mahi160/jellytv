@@ -45,7 +45,7 @@ public class LibraryPoolResolver : IMediaPoolResolver
             query.TopParentIds = ResolveLibraryIds(block.Libraries);
         }
 
-        var users = _userManager.GetUsers().ToList();
+        var users = _userManager.Users.ToList();
         if (users.Count == 0)
         {
             return _libraryManager.GetItemList(query);

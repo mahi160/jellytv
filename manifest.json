@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.3.0",
+        "changelog": "Fix: plugin was disabled at startup because it referenced Jellyfin.Controller/Jellyfin.Model 10.11.11 while the target server runs 10.11.8 -- Jellyfin's plugin loader binds these by exact assembly version with no redirects. Now pinned to 10.11.8. Also fixed the earlier Windows-native e_sqlite3.dll packaging issue.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.3.0/Broadcast_0.2.3.0.zip",
+        "checksum": "c2668f431b30ea0d84dbf778596af37f",
+        "timestamp": "2026-07-01T00:00:00Z"
+      },
+      {
         "version": "0.2.2.0",
         "changelog": "Fix: plugin was disabled at startup (Malfunctioned) because Jellyfin's plugin loader tries to load every *.dll under the plugin folder as a managed assembly, including the bundled Windows-native e_sqlite3.dll. That native binary is no longer packaged. Also: config page now shows ready-to-copy M3U/XMLTV/Stream URLs.",
         "targetAbi": "10.11.0.0",

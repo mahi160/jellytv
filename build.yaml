@@ -1,8 +1,8 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.2.0"
-targetAbi: "10.11.0.0"
+version: "0.2.3.0"
+targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
 description: >
@@ -18,9 +18,9 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  Fix: plugin was disabled at startup ("Malfunctioned") because Jellyfin's plugin loader recursively
-  tries to load every *.dll under the plugin folder as a managed assembly, including the bundled
-  Windows-native e_sqlite3.dll -- which isn't one. The Windows native SQLite binaries are no longer
-  packaged (Linux/macOS natives use .so/.dylib and were never affected). Also: config page now shows
-  ready-to-copy M3U/XMLTV/Stream URLs (with API key included) for adding the channel to Jellyfin's own
-  Live TV.
+  Fix: plugin was disabled at startup because it referenced Jellyfin.Controller/Jellyfin.Model 10.11.11
+  while the target server runs 10.11.8 -- Jellyfin's plugin loader binds these by exact assembly
+  version with no redirects, so any mismatch disables the plugin. Now pinned to 10.11.8. Also fixed:
+  bundled Windows-native e_sqlite3.dll (not a managed assembly, was crashing the loader) removed from
+  the package; Microsoft.Data.Sqlite and its native SQLite deps are now bundled correctly. Also: config
+  page now shows ready-to-copy M3U/XMLTV/Stream URLs (with API key included).

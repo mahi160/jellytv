@@ -55,6 +55,12 @@ header) — there's no anonymous access, by design (see PRD non-goals).
 
 ## Known limitations (V1)
 
+- **Pinned to Jellyfin 10.11.8.** Jellyfin's plugin loader binds `MediaBrowser.*` assemblies by exact
+  version with no redirects, so this plugin only loads on the exact server version it was built
+  against. Running a different Jellyfin patch version requires rebuilding with matching
+  `Jellyfin.Controller`/`Jellyfin.Model` package versions in the `.csproj`.
+
+
 - Transitions between Programs are not seamless — see ADR 0002. Best experience is through
   Jellyfin's own apps polling `/Broadcast/Channel/Current`; generic IPTV players using the M3U's
   redirect endpoint work but may show a brief interruption between items.
