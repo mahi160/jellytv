@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using Jellyfin.Plugin.Broadcast.Configuration;
+using Jellyfin.Plugin.Broadcast.Data;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -23,7 +25,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
+        Db = new BroadcastDbContext(Path.Combine(applicationPaths.DataPath, "broadcast"));
     }
+
+    /// <summary>
+    /// Gets the plugin's database context (runtime/generated state only — see ADR 0004).
+    /// </summary>
+    public BroadcastDbContext Db { get; }
 
     /// <inheritdoc />
     public override string Name => "Broadcast";
