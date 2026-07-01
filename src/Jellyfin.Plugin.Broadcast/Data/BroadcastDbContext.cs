@@ -31,12 +31,28 @@ public class BroadcastDbContext
     {
         var connection = new SqliteConnection(_connectionString);
         connection.Open();
+
+        // busy_timeout is per-connection (unlike journal_mode=WAL, which is sticky on the file) —
+        // without it, a write from one connection can make a concurrent read fail immediately instead of waiting.
+        using var pragmaCommand = connection.CreateCommand();
+        pragmaCommand.CommandText = "PRAGMA busy_timeout=5000;";
+        pragmaCommand.ExecuteNonQuery();
+
         return connection;
     }
 
     private void Initialize()
     {
         using var connection = OpenConnection();
+
+        // WAL + a busy timeout let API reads and a background regeneration write happen concurrently
+        // without "database is locked" errors (default SQLite locking is exclusive-writer/blocking otherwise).
+        using (var pragmaCommand = connection.CreateCommand())
+        {
+            pragmaCommand.CommandText = "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;";
+            pragmaCommand.ExecuteNonQuery();
+        }
+
         using var command = connection.CreateCommand();
         command.CommandText = """
             CREATE TABLE IF NOT EXISTS Programs (

@@ -85,4 +85,23 @@ public class MovieHistoryRepository
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
+
+    /// <summary>
+    /// Deletes airings recorded before the given cutoff. Without this, MovieHistory grows forever on a
+    /// long-running server — entries older than any block's Cooldown are no longer needed for anything.
+    /// </summary>
+    /// <param name="cutoffUtc">Airings strictly before this time are deleted.</param>
+    /// <returns>How many rows were deleted.</returns>
+    public int PruneOlderThan(DateTime cutoffUtc)
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM MovieHistory WHERE AiredUtc < $cutoff";
+        var param = command.CreateParameter();
+        param.ParameterName = "$cutoff";
+        param.Value = cutoffUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
+        command.Parameters.Add(param);
+
+        return command.ExecuteNonQuery();
+    }
 }
