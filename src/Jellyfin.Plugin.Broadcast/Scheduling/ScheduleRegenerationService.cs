@@ -106,10 +106,13 @@ public class ScheduleRegenerationService
             .Select(b => b.Name)
             .ToHashSet();
 
-        foreach (var program in generated.Where(p => movieBlockNames.Contains(p.BlockName)))
-        {
-            _movieHistory.RecordAired(program.ItemId, program.StartUtc);
-        }
+        // Single transaction instead of one connection per airing (ADR: this batch doesn't share a
+        // transaction with the Programs replace above — a crash between the two can't corrupt either
+        // table, but could leave history one regeneration behind Programs; regeneration is idempotent
+        // and re-running fixes that, so it isn't worth a cross-repository transaction).
+        _movieHistory.RecordAiredBatch(generated
+            .Where(p => movieBlockNames.Contains(p.BlockName))
+            .Select(p => (p.ItemId, p.StartUtc)));
 
         var maxCooldown = validBlocks.Count > 0 ? validBlocks.Max(b => b.MovieCooldownDays) : 0;
         var retention = TimeSpan.FromDays(maxCooldown * 2);

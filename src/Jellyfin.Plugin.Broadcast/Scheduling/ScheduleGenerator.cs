@@ -178,8 +178,8 @@ public class ScheduleGenerator
             OrderingStrategy.Sequential => PickSequential(pool, recentlyScheduled),
             OrderingStrategy.Random => pool[_random.Next(pool.Count)],
             OrderingStrategy.WeightedRandom => PickWeighted(pool, weightFactor),
-            OrderingStrategy.Chronological or OrderingStrategy.OldestFirst => pool.OrderBy(c => c.ReleaseDate ?? DateTime.MinValue).First(),
-            OrderingStrategy.NewestFirst => pool.OrderByDescending(c => c.ReleaseDate ?? DateTime.MinValue).First(),
+            OrderingStrategy.Chronological or OrderingStrategy.OldestFirst => PickByReleaseDate(pool, newestFirst: false),
+            OrderingStrategy.NewestFirst => PickByReleaseDate(pool, newestFirst: true),
             // NeverPlayed and LeastPlayed both sort ascending by airings — items that have never aired (count 0) sort first naturally.
             OrderingStrategy.LeastPlayed or OrderingStrategy.NeverPlayed => pool.OrderBy(c => _movieHistory.GetAiredCount(c.ItemId)).First(),
             _ => pool[0]
@@ -210,6 +210,11 @@ public class ScheduleGenerator
         var idx = sorted.IndexOf(lastAiredItem);
         return sorted[(idx + 1) % sorted.Count];
     }
+
+    private static ScheduleCandidate PickByReleaseDate(IReadOnlyList<ScheduleCandidate> pool, bool newestFirst) =>
+        newestFirst
+            ? pool.OrderByDescending(c => c.ReleaseDate ?? DateTime.MinValue).First()
+            : pool.OrderBy(c => c.ReleaseDate ?? DateTime.MinValue).First();
 
     private ScheduleCandidate PickWeighted(IReadOnlyList<ScheduleCandidate> pool, WeightFactor factor)
     {
@@ -336,9 +341,9 @@ public class ScheduleGenerator
                 return idx < 0 ? sorted[0] : sorted[(idx + 1) % sorted.Count];
             case OrderingStrategy.Chronological:
             case OrderingStrategy.OldestFirst:
-                return representatives.OrderBy(c => c.ReleaseDate ?? DateTime.MinValue).First();
+                return PickByReleaseDate(representatives, newestFirst: false);
             case OrderingStrategy.NewestFirst:
-                return representatives.OrderByDescending(c => c.ReleaseDate ?? DateTime.MinValue).First();
+                return PickByReleaseDate(representatives, newestFirst: true);
             case OrderingStrategy.WeightedRandom when block.WeightFactor == WeightFactor.Rating:
                 return PickWeighted(representatives, WeightFactor.Rating);
             default:

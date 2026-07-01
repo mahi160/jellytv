@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Jellyfin.Plugin.Broadcast.Data;
@@ -8,7 +9,6 @@ namespace Jellyfin.Plugin.Broadcast.Data;
 /// </summary>
 public class MovieHistoryRepository
 {
-    private const string DateFormat = "O";
     private readonly BroadcastDbContext _db;
 
     /// <summary>
@@ -25,22 +25,38 @@ public class MovieHistoryRepository
     /// </summary>
     /// <param name="itemId">The movie's Jellyfin item id.</param>
     /// <param name="airedUtc">When it aired.</param>
-    public void RecordAired(Guid itemId, DateTime airedUtc)
+    public void RecordAired(Guid itemId, DateTime airedUtc) => RecordAiredBatch(new[] { (itemId, airedUtc) });
+
+    /// <summary>
+    /// Records that a batch of movies aired, in a single transaction. Used after a full schedule
+    /// regeneration so history isn't written via one SQLite connection per airing (see <see cref="ProgramRepository.ReplaceAll"/>
+    /// for the same batching pattern applied to Programs).
+    /// </summary>
+    /// <param name="airings">The item id and aired time of each airing.</param>
+    public void RecordAiredBatch(IEnumerable<(Guid ItemId, DateTime AiredUtc)> airings)
     {
         using var connection = _db.OpenConnection();
+        using var transaction = connection.BeginTransaction();
+
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = "INSERT INTO MovieHistory (ItemId, AiredUtc) VALUES ($itemId, $airedUtc)";
         var itemIdParam = command.CreateParameter();
         itemIdParam.ParameterName = "$itemId";
-        itemIdParam.Value = itemId.ToString();
         command.Parameters.Add(itemIdParam);
 
         var airedParam = command.CreateParameter();
         airedParam.ParameterName = "$airedUtc";
-        airedParam.Value = airedUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
         command.Parameters.Add(airedParam);
 
-        command.ExecuteNonQuery();
+        foreach (var (itemId, airedUtc) in airings)
+        {
+            itemIdParam.Value = itemId.ToString();
+            airedParam.Value = SqliteDateTime.ToText(airedUtc);
+            command.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
     }
 
     /// <summary>
@@ -53,18 +69,10 @@ public class MovieHistoryRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT MAX(AiredUtc) FROM MovieHistory WHERE ItemId = $itemId";
-        var param = command.CreateParameter();
-        param.ParameterName = "$itemId";
-        param.Value = itemId.ToString();
-        command.Parameters.Add(param);
+        command.AddParam("$itemId", itemId.ToString());
 
         var result = command.ExecuteScalar();
-        if (result is null or DBNull)
-        {
-            return null;
-        }
-
-        return DateTime.Parse((string)result, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        return result is null or DBNull ? null : SqliteDateTime.Parse((string)result);
     }
 
     /// <summary>
@@ -78,10 +86,7 @@ public class MovieHistoryRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM MovieHistory WHERE ItemId = $itemId";
-        var param = command.CreateParameter();
-        param.ParameterName = "$itemId";
-        param.Value = itemId.ToString();
-        command.Parameters.Add(param);
+        command.AddParam("$itemId", itemId.ToString());
 
         return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
@@ -97,10 +102,7 @@ public class MovieHistoryRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "DELETE FROM MovieHistory WHERE AiredUtc < $cutoff";
-        var param = command.CreateParameter();
-        param.ParameterName = "$cutoff";
-        param.Value = cutoffUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-        command.Parameters.Add(param);
+        command.AddParam("$cutoff", SqliteDateTime.ToText(cutoffUtc));
 
         return command.ExecuteNonQuery();
     }

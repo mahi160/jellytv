@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Microsoft.Data.Sqlite;
 
 namespace Jellyfin.Plugin.Broadcast.Data;
@@ -10,7 +9,6 @@ namespace Jellyfin.Plugin.Broadcast.Data;
 /// </summary>
 public class ProgramRepository
 {
-    private const string DateFormat = "O";
     private readonly BroadcastDbContext _db;
 
     /// <summary>
@@ -62,8 +60,8 @@ public class ProgramRepository
             {
                 blockNameParam.Value = program.BlockName;
                 itemIdParam.Value = program.ItemId.ToString();
-                startParam.Value = program.StartUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-                endParam.Value = program.EndUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
+                startParam.Value = SqliteDateTime.ToText(program.StartUtc);
+                endParam.Value = SqliteDateTime.ToText(program.EndUtc);
                 insert.ExecuteNonQuery();
             }
         }
@@ -81,10 +79,7 @@ public class ProgramRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, BlockName, ItemId, StartUtc, EndUtc FROM Programs WHERE StartUtc <= $now AND EndUtc > $now ORDER BY StartUtc LIMIT 1";
-        var param = command.CreateParameter();
-        param.ParameterName = "$now";
-        param.Value = atUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-        command.Parameters.Add(param);
+        command.AddParam("$now", SqliteDateTime.ToText(atUtc));
 
         using var reader = command.ExecuteReader();
         return reader.Read() ? ReadProgram(reader) : null;
@@ -101,15 +96,8 @@ public class ProgramRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, BlockName, ItemId, StartUtc, EndUtc FROM Programs WHERE StartUtc >= $from AND StartUtc < $to ORDER BY StartUtc";
-        var fromParam = command.CreateParameter();
-        fromParam.ParameterName = "$from";
-        fromParam.Value = fromUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-        command.Parameters.Add(fromParam);
-
-        var toParam = command.CreateParameter();
-        toParam.ParameterName = "$to";
-        toParam.Value = toUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-        command.Parameters.Add(toParam);
+        command.AddParam("$from", SqliteDateTime.ToText(fromUtc));
+        command.AddParam("$to", SqliteDateTime.ToText(toUtc));
 
         var results = new List<Program>();
         using var reader = command.ExecuteReader();
@@ -131,10 +119,7 @@ public class ProgramRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, BlockName, ItemId, StartUtc, EndUtc FROM Programs WHERE StartUtc >= $from ORDER BY StartUtc LIMIT 1";
-        var param = command.CreateParameter();
-        param.ParameterName = "$from";
-        param.Value = fromUtc.ToString(DateFormat, CultureInfo.InvariantCulture);
-        command.Parameters.Add(param);
+        command.AddParam("$from", SqliteDateTime.ToText(fromUtc));
 
         using var reader = command.ExecuteReader();
         return reader.Read() ? ReadProgram(reader) : null;
@@ -147,8 +132,8 @@ public class ProgramRepository
             Id = reader.GetInt64(0),
             BlockName = reader.GetString(1),
             ItemId = Guid.Parse(reader.GetString(2)),
-            StartUtc = DateTime.Parse(reader.GetString(3), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
-            EndUtc = DateTime.Parse(reader.GetString(4), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+            StartUtc = SqliteDateTime.Parse(reader.GetString(3)),
+            EndUtc = SqliteDateTime.Parse(reader.GetString(4))
         };
     }
 }

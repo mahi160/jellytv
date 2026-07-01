@@ -28,10 +28,7 @@ public class EpisodeStateRepository
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT SeriesId, SeasonNumber, EpisodeNumber FROM EpisodeState WHERE BlockName = $blockName";
-        var param = command.CreateParameter();
-        param.ParameterName = "$blockName";
-        param.Value = blockName;
-        command.Parameters.Add(param);
+        command.AddParam("$blockName", blockName);
 
         using var reader = command.ExecuteReader();
         if (!reader.Read())
@@ -65,19 +62,11 @@ public class EpisodeStateRepository
                 EpisodeNumber = excluded.EpisodeNumber
             """;
 
-        AddParam(command, "$blockName", state.BlockName);
-        AddParam(command, "$seriesId", state.SeriesId.ToString());
-        AddParam(command, "$season", state.SeasonNumber);
-        AddParam(command, "$episode", state.EpisodeNumber);
+        command.AddParam("$blockName", state.BlockName);
+        command.AddParam("$seriesId", state.SeriesId.ToString());
+        command.AddParam("$season", state.SeasonNumber);
+        command.AddParam("$episode", state.EpisodeNumber);
 
         command.ExecuteNonQuery();
-    }
-
-    private static void AddParam(Microsoft.Data.Sqlite.SqliteCommand command, string name, object value)
-    {
-        var param = command.CreateParameter();
-        param.ParameterName = name;
-        param.Value = value;
-        command.Parameters.Add(param);
     }
 }
