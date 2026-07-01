@@ -100,4 +100,21 @@ public class DataTests : IDisposable
 
         Assert.Equal(new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), last);
     }
+
+    [Fact]
+    public void MovieHistory_PruneOlderThan_DeletesOnlyOldRows()
+    {
+        var repo = new MovieHistoryRepository(_db);
+        var itemId = Guid.NewGuid();
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var recent = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        repo.RecordAired(itemId, old);
+        repo.RecordAired(itemId, recent);
+
+        var deleted = repo.PruneOlderThan(new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(1, deleted);
+        Assert.Equal(recent, repo.GetLastAired(itemId));
+        Assert.Equal(1, repo.GetAiredCount(itemId));
+    }
 }
