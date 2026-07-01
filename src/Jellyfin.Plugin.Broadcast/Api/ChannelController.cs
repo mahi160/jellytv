@@ -4,7 +4,9 @@ using System.Linq;
 using Jellyfin.Plugin.Broadcast.Data;
 using Jellyfin.Plugin.Broadcast.Playback;
 using Jellyfin.Plugin.Broadcast.Scheduling;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Broadcast.Api;
 
@@ -18,6 +20,7 @@ public class ChannelController : ControllerBase
     private readonly PlaybackResolver _playbackResolver;
     private readonly ProgramRepository _programs;
     private readonly ScheduleRegenerationService _regenerationService;
+    private readonly ILogger<ChannelController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChannelController"/> class.
@@ -25,11 +28,13 @@ public class ChannelController : ControllerBase
     /// <param name="playbackResolver">Resolves current/next Program.</param>
     /// <param name="programs">The generated schedule.</param>
     /// <param name="regenerationService">Regenerates the schedule.</param>
-    public ChannelController(PlaybackResolver playbackResolver, ProgramRepository programs, ScheduleRegenerationService regenerationService)
+    /// <param name="logger">Logger.</param>
+    public ChannelController(PlaybackResolver playbackResolver, ProgramRepository programs, ScheduleRegenerationService regenerationService, ILogger<ChannelController> logger)
     {
         _playbackResolver = playbackResolver;
         _programs = programs;
         _regenerationService = regenerationService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -69,21 +74,31 @@ public class ChannelController : ControllerBase
 
     /// <summary>
     /// Regenerates the schedule immediately (full wipe-and-rebuild — manual overrides are not preserved).
+    /// A regeneration already in progress (daily task, auto-trigger, or another request) is reported as such
+    /// rather than run twice concurrently.
     /// </summary>
-    /// <returns>204 No Content on success.</returns>
+    /// <returns>200 OK if it ran, 409 Conflict if one was already in progress, 500 if it failed.</returns>
     [HttpPost("Regenerate")]
     public IActionResult Regenerate()
     {
-        _regenerationService.Regenerate(Plugin.Instance!.Configuration, DateTime.UtcNow);
-        return NoContent();
+        try
+        {
+            var ran = _regenerationService.Regenerate(Plugin.Instance!.Configuration, DateTime.UtcNow);
+            return ran ? Ok() : Conflict("A regeneration is already in progress.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Manual schedule regeneration failed");
+            return Problem("Schedule regeneration failed — check server logs.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
     /// Redirects to whatever's airing right now, at the resolved playback offset.
     /// Per ADR 0002, this is a best-effort convenience for generic IPTV players — Jellyfin's own apps
     /// should call <see cref="GetCurrent"/> and drive playback via the normal session API instead.
-    /// Forces direct-file streaming (no transcode negotiation), since a bare redirect can't run Jellyfin's
-    /// PlaybackInfo/device-profile handshake first.
+    /// Does not force direct-file streaming, so Jellyfin can still transcode on the fly for incompatible
+    /// codecs — a bare redirect can't run the full PlaybackInfo/device-profile handshake first either way.
     /// </summary>
     /// <returns>A redirect to the currently airing item's stream URL.</returns>
     [HttpGet("Stream")]
@@ -96,11 +111,13 @@ public class ChannelController : ControllerBase
         }
 
         var startTicks = resolved.Offset.Ticks;
-        var target = $"/Videos/{resolved.Program.ItemId}/stream?static=true&startTimeTicks={startTicks}";
-        var apiKey = Request.Query["api_key"];
+        var target = $"/Videos/{resolved.Program.ItemId}/stream?startTimeTicks={startTicks}";
+        var apiKey = Request.Query["api_key"].ToString();
         if (!string.IsNullOrEmpty(apiKey))
         {
-            target += $"&api_key={apiKey}";
+            // Escaped: this value is attacker-controlled (arbitrary query string) and is otherwise
+            // reflected straight into a redirect Location header — unescaped, it's a header-injection/open-redirect vector.
+            target += $"&api_key={Uri.EscapeDataString(apiKey)}";
         }
 
         return Redirect(target);
