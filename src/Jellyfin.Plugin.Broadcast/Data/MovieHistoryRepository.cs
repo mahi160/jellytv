@@ -66,4 +66,23 @@ public class MovieHistoryRepository
 
         return DateTime.Parse((string)result, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
     }
+
+    /// <summary>
+    /// Gets how many times a movie has aired (used for LeastPlayed/NeverPlayed ordering).
+    /// Note: this is airings on the channel, not Jellyfin per-user watch history — state is global (see ADR 0001).
+    /// </summary>
+    /// <param name="itemId">The movie's Jellyfin item id.</param>
+    /// <returns>The number of times it has aired.</returns>
+    public int GetAiredCount(Guid itemId)
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM MovieHistory WHERE ItemId = $itemId";
+        var param = command.CreateParameter();
+        param.ParameterName = "$itemId";
+        param.Value = itemId.ToString();
+        command.Parameters.Add(param);
+
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    }
 }
