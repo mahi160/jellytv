@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b",
+    "name": "Broadcast",
+    "description": "Jellyfin Broadcast generates a continuous programming schedule from your media library and exposes it as a live channel with M3U/XMLTV support.",
+    "overview": "Turns your Jellyfin library into a single always-on TV channel",
+    "owner": "jellytv",
+    "category": "General",
+    "imageUrl": "",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "changelog": "Initial skeleton.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.1.0.0/Broadcast_0.1.0.0.zip",
+        "checksum": "92092989473a072547517afce177e992",
+        "timestamp": "2026-07-01T00:00:00Z"
+      }
+    ]
+  }
+]
