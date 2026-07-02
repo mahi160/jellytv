@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.6.0",
+        "changelog": "Security fix: FeedController (/Broadcast/m3u, /Broadcast/xmltv) and ChannelController (/Broadcast/Channel/Current, /Next, /Schedule, /Stream) had no [Authorize] attribute at all -- Jellyfin has no FallbackPolicy configured, so endpoints without an explicit [Authorize] are fully anonymous by default (confirmed live: real data returned, no api_key, no 401). Added the standard [Authorize] attribute Jellyfin's own controllers use, so these now correctly require an authenticated user. Existing M3U/XMLTV/Stream URLs (which already embed an api_key) are unaffected.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.6.0/Broadcast_0.2.6.0.zip",
+        "checksum": "95c9ad3aeef43220bd1394739d06446d",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.5.2",
         "changelog": "Fix: config page still had no styling and the Watch URL fields showed empty. Root cause: Jellyfin's plugin page loader only injects the page's <body> content into the dashboard SPA, so the previous fix's <style> tag (in <head>) never applied -- moved inside the body. Also, the custom 'pageshow' event Jellyfin fires on plugin pages doesn't reliably trigger on every dashboard version -- initialization now runs immediately at script load (with a short retry poll) in addition to pageshow.",
         "targetAbi": "10.11.8.0",

@@ -12,8 +12,11 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Broadcast.Api;
 
 /// <summary>
-/// The channel's public REST API: what's on now/next, the full schedule, and manual regeneration.
+/// The channel's REST API: what's on now/next, the full schedule, and manual regeneration.
+/// Requires an authenticated Jellyfin user — not public. See M3uGenerator/XmlTvGenerator for how
+/// clients authenticate to the actual feed URLs (an api_key query param, same as any other Jellyfin API route).
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("Broadcast/Channel")]
 public class ChannelController : ControllerBase

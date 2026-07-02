@@ -4,6 +4,7 @@ using Jellyfin.Plugin.Broadcast.Data;
 using Jellyfin.Plugin.Broadcast.Feeds;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ namespace Jellyfin.Plugin.Broadcast.Api;
 /// <summary>
 /// The channel's M3U playlist and XMLTV guide, for IPTV clients and Jellyfin's own Live TV M3U tuner.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("Broadcast")]
 public class FeedController : ControllerBase
