@@ -44,6 +44,33 @@ public class FeedGeneratorTests
     }
 
     [Fact]
+    public void M3uGenerator_EscapesCommaInChannelName_SoExtinfDoesNotBreak()
+    {
+        var m3u = M3uGenerator.Generate("broadcast", "News, Weather", "http://server/Broadcast/Channel/Stream");
+
+        // A literal comma in the name would otherwise be parsed by IPTV clients as the
+        // attributes/display-name separator, corrupting the entry.
+        Assert.DoesNotContain("News, Weather", m3u);
+        Assert.Contains("News  Weather", m3u);
+    }
+
+    [Fact]
+    public void M3uGenerator_IncludesLogoWhenProvided()
+    {
+        var m3u = M3uGenerator.Generate("broadcast", "My TV", "http://server/stream", "http://server/logo.png");
+
+        Assert.Contains("tvg-logo=\"http://server/logo.png\"", m3u);
+    }
+
+    [Fact]
+    public void XmlTvGenerator_IncludesXmlDeclaration()
+    {
+        var xml = XmlTvGenerator.Generate("broadcast", "My TV", Array.Empty<ProgramMetadata>());
+
+        Assert.StartsWith("<?xml", xml);
+    }
+
+    [Fact]
     public void XmlTvGenerator_EscapesSpecialCharactersInTitles()
     {
         var programs = new List<ProgramMetadata>

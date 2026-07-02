@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Model.Tasks;
@@ -47,7 +48,10 @@ public class RegenerationScheduledTask : IScheduledTask
     /// <inheritdoc />
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
     {
-        var timeOfDay = TimeSpan.TryParse(Plugin.Instance?.Configuration.RegenerationTime, out var parsed)
+        // Strict HH:mm parse — loose TimeSpan.Parse would happily read a stray "4" as 4 *days*.
+        // Note: this only takes effect the first time the task is created; Jellyfin persists the trigger
+        // after that, so changing RegenerationTime later must be followed up under Dashboard > Scheduled Tasks.
+        var timeOfDay = TimeSpan.TryParseExact(Plugin.Instance?.Configuration.RegenerationTime, "hh\\:mm", CultureInfo.InvariantCulture, out var parsed)
             ? parsed
             : new TimeSpan(4, 0, 0);
 

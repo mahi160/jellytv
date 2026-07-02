@@ -148,6 +148,22 @@ public class ScheduleGeneratorTests : IDisposable
     }
 
     [Fact]
+    public void Generate_DoesNotThrow_AcrossSpringForwardDstTransition()
+    {
+        // America/New_York springs forward at 02:00 -> 03:00 on 2026-03-08; a block boundary landing in
+        // that nonexistent local hour must not crash the whole regeneration.
+        var tz = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+        var block = MovieBlock(start: "01:30", end: "04:00", cooldownDays: 0);
+        var pool = new[] { new ScheduleCandidate { ItemId = Guid.NewGuid(), Duration = TimeSpan.FromMinutes(30) } };
+        var rangeStart = TimeZoneInfo.ConvertTimeToUtc(new DateTime(2026, 3, 7, 12, 0, 0, DateTimeKind.Unspecified), tz);
+
+        var generator = new ScheduleGenerator(_movieHistory, _episodeState, new Random(1));
+        var programs = generator.Generate(rangeStart, rangeStart.AddDays(2), tz, new[] { block }, _ => pool);
+
+        Assert.NotEmpty(programs);
+    }
+
+    [Fact]
     public void Episodes_SelectAnotherSeries_WhenActiveSeriesFinishes()
     {
         var seriesA = Guid.NewGuid();

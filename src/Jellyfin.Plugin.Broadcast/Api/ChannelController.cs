@@ -4,6 +4,7 @@ using System.Linq;
 using Jellyfin.Plugin.Broadcast.Data;
 using Jellyfin.Plugin.Broadcast.Playback;
 using Jellyfin.Plugin.Broadcast.Scheduling;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -44,8 +45,16 @@ public class ChannelController : ControllerBase
     [HttpGet("Current")]
     public ActionResult<ProgramDto> GetCurrent()
     {
-        var resolved = _playbackResolver.GetCurrent(DateTime.UtcNow);
-        return resolved is null ? NotFound() : ProgramDto.From(resolved.Program, resolved.Offset);
+        try
+        {
+            var resolved = _playbackResolver.GetCurrent(DateTime.UtcNow);
+            return resolved is null ? NotFound() : ProgramDto.From(resolved.Program, resolved.Offset);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resolve the current Program");
+            return Problem("Failed to resolve the current Program — check server logs.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -55,8 +64,16 @@ public class ChannelController : ControllerBase
     [HttpGet("Next")]
     public ActionResult<ProgramDto> GetNext()
     {
-        var next = _playbackResolver.GetNext(DateTime.UtcNow);
-        return next is null ? NotFound() : ProgramDto.From(next, null);
+        try
+        {
+            var next = _playbackResolver.GetNext(DateTime.UtcNow);
+            return next is null ? NotFound() : ProgramDto.From(next, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resolve the next Program");
+            return Problem("Failed to resolve the next Program — check server logs.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -66,10 +83,18 @@ public class ChannelController : ControllerBase
     [HttpGet("Schedule")]
     public ActionResult<IEnumerable<ProgramDto>> GetSchedule()
     {
-        var config = Plugin.Instance!.Configuration;
-        var now = DateTime.UtcNow;
-        var programs = _programs.GetRange(now, now.AddDays(config.ScheduleDurationDays));
-        return Ok(programs.Select(p => ProgramDto.From(p, null)));
+        try
+        {
+            var config = Plugin.Instance!.Configuration;
+            var now = DateTime.UtcNow;
+            var programs = _programs.GetRange(now, now.AddDays(config.ScheduleDurationDays));
+            return Ok(programs.Select(p => ProgramDto.From(p, null)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read the schedule");
+            return Problem("Failed to read the schedule — check server logs.", statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -78,6 +103,7 @@ public class ChannelController : ControllerBase
     /// rather than run twice concurrently.
     /// </summary>
     /// <returns>200 OK if it ran, 409 Conflict if one was already in progress, 500 if it failed.</returns>
+    [Authorize(Policy = "RequiresElevation")]
     [HttpPost("Regenerate")]
     public IActionResult Regenerate()
     {
@@ -104,22 +130,30 @@ public class ChannelController : ControllerBase
     [HttpGet("Stream")]
     public IActionResult Stream()
     {
-        var resolved = _playbackResolver.GetCurrent(DateTime.UtcNow);
-        if (resolved is null)
+        try
         {
-            return NotFound();
-        }
+            var resolved = _playbackResolver.GetCurrent(DateTime.UtcNow);
+            if (resolved is null)
+            {
+                return NotFound();
+            }
 
-        var startTicks = resolved.Offset.Ticks;
-        var target = $"/Videos/{resolved.Program.ItemId}/stream?startTimeTicks={startTicks}";
-        var apiKey = Request.Query["api_key"].ToString();
-        if (!string.IsNullOrEmpty(apiKey))
+            var startTicks = resolved.Offset.Ticks;
+            var target = $"/Videos/{resolved.Program.ItemId}/stream?startTimeTicks={startTicks}";
+            var apiKey = Request.Query["api_key"].ToString();
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                // Escaped: this value is attacker-controlled (arbitrary query string) and is otherwise
+                // reflected straight into a redirect Location header — unescaped, it's a header-injection/open-redirect vector.
+                target += $"&api_key={Uri.EscapeDataString(apiKey)}";
+            }
+
+            return Redirect(target);
+        }
+        catch (Exception ex)
         {
-            // Escaped: this value is attacker-controlled (arbitrary query string) and is otherwise
-            // reflected straight into a redirect Location header — unescaped, it's a header-injection/open-redirect vector.
-            target += $"&api_key={Uri.EscapeDataString(apiKey)}";
+            _logger.LogError(ex, "Failed to resolve the stream redirect");
+            return Problem("Failed to resolve playback — check server logs.", statusCode: StatusCodes.Status500InternalServerError);
         }
-
-        return Redirect(target);
     }
 }

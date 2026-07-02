@@ -92,6 +92,49 @@ public class MovieHistoryRepository
     }
 
     /// <summary>
+    /// Gets last-aired time and airing count for every movie with recorded history, in a single query —
+    /// used by <see cref="Jellyfin.Plugin.Broadcast.Scheduling.ScheduleGenerator"/> instead of one query per
+    /// candidate per pick (that pattern opened tens of thousands of connections on a large library).
+    /// </summary>
+    /// <returns>Item id to (last aired UTC, airing count).</returns>
+    public Dictionary<Guid, (DateTime? LastAired, int Count)> GetSummary()
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT ItemId, MAX(AiredUtc), COUNT(*) FROM MovieHistory GROUP BY ItemId";
+
+        var results = new Dictionary<Guid, (DateTime?, int)>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var itemId = Guid.Parse(reader.GetString(0));
+            var lastAired = reader.IsDBNull(1) ? (DateTime?)null : SqliteDateTime.Parse(reader.GetString(1));
+            var count = reader.GetInt32(2);
+            results[itemId] = (lastAired, count);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Deletes airings recorded at or after the given cutoff. Used at the start of a regeneration to drop
+    /// speculative future airings recorded by the previous regeneration's run (they never really "aired" —
+    /// they're being superseded by a fresh schedule) so Cooldown/LeastPlayed don't see phantom future history
+    /// and airing counts don't inflate by one full schedule's worth on every regeneration.
+    /// </summary>
+    /// <param name="cutoffUtc">Airings at or after this time are deleted.</param>
+    /// <returns>How many rows were deleted.</returns>
+    public int PruneAtOrAfter(DateTime cutoffUtc)
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM MovieHistory WHERE AiredUtc >= $cutoff";
+        command.AddParam("$cutoff", SqliteDateTime.ToText(cutoffUtc));
+
+        return command.ExecuteNonQuery();
+    }
+
+    /// <summary>
     /// Deletes airings recorded before the given cutoff. Without this, MovieHistory grows forever on a
     /// long-running server — entries older than any block's Cooldown are no longer needed for anything.
     /// </summary>

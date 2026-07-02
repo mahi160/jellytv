@@ -16,15 +16,26 @@
                         </div>
                         <div class="inputContainer">
                             <label class="inputLabel" for="TimeZone">Time Zone (IANA name)</label>
-                            <input is="emby-input" type="text" id="TimeZone" name="TimeZone" />
+                            <input is="emby-input" type="text" id="TimeZone" name="TimeZone" list="TimeZoneOptions" />
+                            <datalist id="TimeZoneOptions"></datalist>
+                            <div class="fieldDescription" id="TimeZoneWarning" style="display:none;color:#d32f2f">Not a recognized time zone — the schedule will fall back to UTC until this is fixed.</div>
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="ScheduleDurationDays">Schedule Duration</label>
+                            <select is="emby-select" id="ScheduleDurationDays" name="ScheduleDurationDays">
+                                <option value="1">1 day</option>
+                                <option value="7">7 days</option>
+                                <option value="30">30 days</option>
+                            </select>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel" for="ScheduleDurationDays">Schedule Duration (days)</label>
-                            <input is="emby-input" type="number" id="ScheduleDurationDays" name="ScheduleDurationDays" />
+                            <label class="inputLabel" for="RegenerationTime">Daily Regeneration Time</label>
+                            <input is="emby-input" type="time" id="RegenerationTime" name="RegenerationTime" />
+                            <div class="fieldDescription">Only used the first time this task is created — to change it later, use Dashboard &gt; Scheduled Tasks &gt; Regenerate Broadcast Schedule.</div>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel" for="RegenerationTime">Daily Regeneration Time (HH:mm)</label>
-                            <input is="emby-input" type="text" id="RegenerationTime" name="RegenerationTime" />
+                            <label class="inputLabel" for="ChannelLogoUrl">Channel Logo URL (optional)</label>
+                            <input is="emby-input" type="text" id="ChannelLogoUrl" name="ChannelLogoUrl" />
                         </div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                             <span>Save Channel Settings</span>
@@ -59,12 +70,12 @@
                         <input is="emby-input" type="text" id="BlockName" required />
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel" for="BlockStartTime">Start Time (HH:mm)</label>
-                        <input is="emby-input" type="text" id="BlockStartTime" placeholder="19:00" required />
+                        <label class="inputLabel" for="BlockStartTime">Start Time</label>
+                        <input is="emby-input" type="time" id="BlockStartTime" required />
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel" for="BlockEndTime">End Time (HH:mm)</label>
-                        <input is="emby-input" type="text" id="BlockEndTime" placeholder="23:00" required />
+                        <label class="inputLabel" for="BlockEndTime">End Time</label>
+                        <input is="emby-input" type="time" id="BlockEndTime" required />
                     </div>
                     <div class="selectContainer">
                         <label class="selectLabel" for="BlockContentType">Content Type</label>
@@ -109,14 +120,13 @@
                             <option value="Sequential">Sequential</option>
                             <option value="Random">Random</option>
                             <option value="WeightedRandom">Weighted Random</option>
-                            <option value="Chronological">Chronological</option>
+                            <option value="Chronological">Oldest First (Chronological)</option>
                             <option value="NewestFirst">Newest First</option>
-                            <option value="OldestFirst">Oldest First</option>
                             <option value="LeastPlayed">Least Played</option>
                             <option value="NeverPlayed">Never Played</option>
                         </select>
                     </div>
-                    <div class="selectContainer">
+                    <div class="selectContainer" id="WeightFactorContainer">
                         <label class="selectLabel" for="BlockWeightFactor">Weighted Random Factor</label>
                         <select is="emby-select" id="BlockWeightFactor">
                             <option value="Rating">Rating</option>
@@ -146,8 +156,9 @@
 
                 <div class="verticalSection">
                     <h2>Watch</h2>
-                    <p>Paste these into Jellyfin's own Live TV setup to add this channel with a guide —
-                        the API key is already included, nothing else to fill in.</p>
+                    <p>Paste these into Jellyfin's own Live TV setup to add this channel with a guide.
+                        Replace <code>YOUR_API_KEY</code> in each URL with a dedicated key from
+                        Dashboard &gt; API Keys — don't use your personal login, it stops working when you log out.</p>
                     <div class="inputContainer">
                         <label class="inputLabel" for="M3uUrl">M3U Playlist URL (Live TV → Tuner Devices → M3U Tuner)</label>
                         <input is="emby-input" type="text" id="M3uUrl" readonly="readonly" />
@@ -186,6 +197,25 @@
             var pluginId = 'a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b';
             var page = document.querySelector('#BroadcastConfigPage');
             var blocks = [];
+
+            // Populated from the browser's own IANA database (zero server round-trip) so the free-text
+            // TimeZone field gets autocomplete and can be validated before saving.
+            if (window.Intl && Intl.supportedValuesOf) {
+                var datalist = page.querySelector('#TimeZoneOptions');
+                Intl.supportedValuesOf('timeZone').forEach(function (tz) {
+                    var option = document.createElement('option');
+                    option.value = tz;
+                    datalist.appendChild(option);
+                });
+            }
+
+            function isKnownTimeZone(tz) {
+                if (!window.Intl || !Intl.supportedValuesOf) {
+                    return true; // can't validate on this browser — don't block saving
+                }
+
+                return Intl.supportedValuesOf('timeZone').indexOf(tz) !== -1;
+            }
 
             function csv(value) {
                 return (value || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
@@ -258,6 +288,7 @@
                 page.querySelector('#BlockMovieCooldownDays').value = block.MovieCooldownDays != null ? block.MovieCooldownDays : 30;
                 page.querySelector('#BlockSeriesEndBehavior').value = block.SeriesEndBehavior || 'SelectAnotherSeries';
 
+                updateBlockFormVisibility();
                 form.style.display = '';
                 form.scrollIntoView({ behavior: 'smooth' });
             }
@@ -266,7 +297,21 @@
                 page.querySelector('#BlockEditForm').style.display = 'none';
             }
 
+            // Toggles the fields that only make sense for the current ContentType/Order selection —
+            // without this every block editor showed all 14 fields regardless of relevance.
+            function updateBlockFormVisibility() {
+                var isMovie = page.querySelector('#BlockContentType').value === 'Movie';
+                page.querySelector('#MovieCooldownContainer').style.display = isMovie ? '' : 'none';
+                page.querySelector('#SeriesEndBehaviorContainer').style.display = isMovie ? 'none' : '';
+                page.querySelector('#WeightFactorContainer').style.display =
+                    page.querySelector('#BlockOrder').value === 'WeightedRandom' ? '' : 'none';
+            }
+
             function deleteBlock(index) {
+                if (!confirm('Delete block "' + blocks[index].Name + '"? This regenerates the schedule.')) {
+                    return;
+                }
+
                 blocks.splice(index, 1);
                 renderBlocksTable();
                 saveBlocks();
@@ -283,22 +328,27 @@
             }
 
             function renderWatchUrls() {
-                var apiKey = ApiClient.accessToken();
-                page.querySelector('#M3uUrl').value = ApiClient.getUrl('Broadcast/m3u', { api_key: apiKey });
-                page.querySelector('#XmlTvUrl').value = ApiClient.getUrl('Broadcast/xmltv', { api_key: apiKey });
-                page.querySelector('#StreamUrl').value = ApiClient.getUrl('Broadcast/Channel/Stream', { api_key: apiKey });
+                // Deliberately NOT ApiClient.accessToken(): that's the admin's personal session token —
+                // pasted into an IPTV player it grants full admin API access and stops working on logout.
+                // A dedicated API key (Dashboard > API Keys) never expires and can be revoked independently.
+                var placeholder = 'YOUR_API_KEY';
+                page.querySelector('#M3uUrl').value = ApiClient.getUrl('Broadcast/m3u', { api_key: placeholder });
+                page.querySelector('#XmlTvUrl').value = ApiClient.getUrl('Broadcast/xmltv', { api_key: placeholder });
+                page.querySelector('#StreamUrl').value = ApiClient.getUrl('Broadcast/Channel/Stream', { api_key: placeholder });
             }
 
             page.addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     page.querySelector('#ChannelName').value = config.ChannelName || '';
+                    page.querySelector('#ChannelLogoUrl').value = config.ChannelLogoUrl || '';
                     page.querySelector('#TimeZone').value = config.TimeZone || '';
                     page.querySelector('#ScheduleDurationDays').value = config.ScheduleDurationDays || 7;
                     page.querySelector('#RegenerationTime').value = config.RegenerationTime || '04:00';
                     blocks = config.Blocks || [];
                     renderBlocksTable();
                     renderWatchUrls();
+                    page.querySelector('#RegenerateStatus').textContent = '';
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -313,9 +363,13 @@
             page.querySelector('#BroadcastChannelForm').addEventListener('submit', function (e) {
                 e.preventDefault();
                 Dashboard.showLoadingMsg();
+                var timeZoneValue = page.querySelector('#TimeZone').value;
+                page.querySelector('#TimeZoneWarning').style.display = isKnownTimeZone(timeZoneValue) ? 'none' : '';
+
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     config.ChannelName = page.querySelector('#ChannelName').value;
-                    config.TimeZone = page.querySelector('#TimeZone').value;
+                    config.ChannelLogoUrl = page.querySelector('#ChannelLogoUrl').value || null;
+                    config.TimeZone = timeZoneValue;
                     config.ScheduleDurationDays = parseInt(page.querySelector('#ScheduleDurationDays').value, 10);
                     config.RegenerationTime = page.querySelector('#RegenerationTime').value;
                     return ApiClient.updatePluginConfiguration(pluginId, config);
@@ -327,6 +381,8 @@
 
             page.querySelector('#AddBlockButton').addEventListener('click', function () { openBlockEditor(-1); });
             page.querySelector('#CancelBlockEditButton').addEventListener('click', closeBlockEditor);
+            page.querySelector('#BlockContentType').addEventListener('change', updateBlockFormVisibility);
+            page.querySelector('#BlockOrder').addEventListener('change', updateBlockFormVisibility);
 
             page.querySelector('#BlockEditForm').addEventListener('submit', function (e) {
                 e.preventDefault();

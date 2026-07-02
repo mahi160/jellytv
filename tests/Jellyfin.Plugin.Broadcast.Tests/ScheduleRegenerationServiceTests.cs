@@ -43,7 +43,7 @@ public class ScheduleRegenerationServiceTests : IDisposable
         };
 
         var generator = new ScheduleGenerator(_movieHistory, _episodeState, new Random(1));
-        _service = new ScheduleRegenerationService(_pool, generator, _programs, _movieHistory, NullLogger<ScheduleRegenerationService>.Instance);
+        _service = new ScheduleRegenerationService(_pool, generator, _programs, _movieHistory, _episodeState, NullLogger<ScheduleRegenerationService>.Instance);
     }
 
     public void Dispose() => Directory.Delete(_tempDir, true);
@@ -118,6 +118,42 @@ public class ScheduleRegenerationServiceTests : IDisposable
     }
 
     [Fact]
+    public void Regenerate_PreservesCurrentlyAiringProgram_InsteadOfCuttingItOff()
+    {
+        _service.Regenerate(ConfigWith(ValidBlock()), Day1);
+        var before = _programs.GetProgramAt(Day1.AddMinutes(30));
+        Assert.NotNull(before);
+
+        // Regenerate again "later", mid-program — must not replace the program currently airing.
+        var laterNow = before!.StartUtc.AddMinutes(30);
+        _service.Regenerate(ConfigWith(ValidBlock()), laterNow);
+
+        var after = _programs.GetProgramAt(laterNow);
+        Assert.NotNull(after);
+        Assert.Equal(before.ItemId, after!.ItemId);
+        Assert.Equal(before.StartUtc, after.StartUtc);
+        Assert.Equal(before.EndUtc, after.EndUtc);
+    }
+
+    [Fact]
+    public void Regenerate_DoesNotInflateMovieAiredCount_OnRepeatedRegeneration()
+    {
+        // A single-item pool means every generated slot is the same movie. Re-running regeneration a
+        // few minutes later (as debounced library-change/config-save triggers would) must not multiply
+        // its recorded airing count each time.
+        _service.Regenerate(ConfigWith(ValidBlock()), Day1);
+        var itemId = _pool.Pool[0].ItemId;
+
+        var secondRunNow = Day1.AddMinutes(5);
+        _service.Regenerate(ConfigWith(ValidBlock()), secondRunNow);
+        var countAfterSecondRun = _movieHistory.GetAiredCount(itemId);
+
+        _service.Regenerate(ConfigWith(ValidBlock()), secondRunNow.AddMinutes(5));
+
+        Assert.Equal(countAfterSecondRun, _movieHistory.GetAiredCount(itemId));
+    }
+
+    [Fact]
     public void Regenerate_ConcurrentCall_SkipsInsteadOfRunningTwice()
     {
         // Simulate "already running" by calling Regenerate again from inside a pool-provider callback,
@@ -134,7 +170,7 @@ public class ScheduleRegenerationServiceTests : IDisposable
         };
 
         var generator = new ScheduleGenerator(_movieHistory, _episodeState, new Random(1));
-        service = new ScheduleRegenerationService(reentrantPool, generator, _programs, _movieHistory, NullLogger<ScheduleRegenerationService>.Instance);
+        service = new ScheduleRegenerationService(reentrantPool, generator, _programs, _movieHistory, _episodeState, NullLogger<ScheduleRegenerationService>.Instance);
 
         var outerRan = service.Regenerate(ConfigWith(ValidBlock()), Day1);
 

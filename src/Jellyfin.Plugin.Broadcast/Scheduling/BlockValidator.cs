@@ -26,7 +26,7 @@ public static class BlockValidator
 
         foreach (var block in blocks)
         {
-            var reason = GetInvalidReason(block, seenNames);
+            var reason = GetInvalidReason(block, seenNames) ?? GetOverlapReason(block, valid);
             if (reason is null)
             {
                 seenNames.Add(block.Name);
@@ -78,4 +78,36 @@ public static class BlockValidator
 
     private static bool IsValidTimeOfDay(string value) =>
         TimeSpan.TryParseExact(value, "hh\\:mm", CultureInfo.InvariantCulture, out _);
+
+    /// <summary>
+    /// Two blocks whose daily windows overlap would make <c>ScheduleGenerator.FindActiveBlock</c> silently
+    /// pick whichever comes first in the list — the later one would never get a single minute scheduled.
+    /// Rejecting it here surfaces that as a config error instead of a mysteriously empty block.
+    /// </summary>
+    private static string? GetOverlapReason(ProgrammingBlock block, IReadOnlyList<ProgrammingBlock> alreadyValid)
+    {
+        var start = TimeSpan.ParseExact(block.StartTime, "hh\\:mm", CultureInfo.InvariantCulture);
+        var end = TimeSpan.ParseExact(block.EndTime, "hh\\:mm", CultureInfo.InvariantCulture);
+
+        foreach (var other in alreadyValid)
+        {
+            var otherStart = TimeSpan.ParseExact(other.StartTime, "hh\\:mm", CultureInfo.InvariantCulture);
+            var otherEnd = TimeSpan.ParseExact(other.EndTime, "hh\\:mm", CultureInfo.InvariantCulture);
+
+            if (WindowsOverlap(start, end, otherStart, otherEnd))
+            {
+                return $"'{block.Name}' ({block.StartTime}-{block.EndTime}) overlaps '{other.Name}' ({other.StartTime}-{other.EndTime}) — the earlier block always wins, so the later one would never air.";
+            }
+        }
+
+        return null;
+    }
+
+    // Two (possibly midnight-wrapping) daily windows overlap iff either one's start falls strictly
+    // inside the other — same containment rule ScheduleGenerator.WindowContains uses for point lookups.
+    private static bool WindowsOverlap(TimeSpan aStart, TimeSpan aEnd, TimeSpan bStart, TimeSpan bEnd) =>
+        Contains(aStart, aEnd, bStart) || Contains(bStart, bEnd, aStart);
+
+    private static bool Contains(TimeSpan start, TimeSpan end, TimeSpan t) =>
+        start <= end ? t >= start && t < end : t >= start || t < end;
 }

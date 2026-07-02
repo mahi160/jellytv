@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Jellyfin.Plugin.Broadcast.Configuration;
+using Jellyfin.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 
@@ -45,7 +46,9 @@ public class LibraryPoolResolver : IMediaPoolResolver
             query.TopParentIds = ResolveLibraryIds(block.Libraries);
         }
 
-        var users = _userManager.Users.ToList();
+        // A disabled user is never actually watching — including them in the intersection would let one
+        // forgotten disabled account starve the whole channel down to an empty pool.
+        var users = _userManager.Users.Where(u => !IsDisabled(u)).ToList();
         if (users.Count == 0)
         {
             return _libraryManager.GetItemList(query);
@@ -75,6 +78,9 @@ public class LibraryPoolResolver : IMediaPoolResolver
 
         return intersectedIds.Select(id => itemsById[id]).ToList();
     }
+
+    private static bool IsDisabled(Jellyfin.Database.Implementations.Entities.User user) =>
+        user.Permissions.Any(p => p.Kind == PermissionKind.IsDisabled && p.Value);
 
     private static HashSet<Guid> Intersect(HashSet<Guid> a, HashSet<Guid> b)
     {

@@ -117,4 +117,57 @@ public class DataTests : IDisposable
         Assert.Equal(recent, repo.GetLastAired(itemId));
         Assert.Equal(1, repo.GetAiredCount(itemId));
     }
+
+    [Fact]
+    public void MovieHistory_PruneAtOrAfter_DeletesFutureSpeculativeRows_KeepsPast()
+    {
+        var repo = new MovieHistoryRepository(_db);
+        var itemId = Guid.NewGuid();
+        var now = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+        var past = now.AddDays(-1);
+        var future = now.AddDays(1);
+        repo.RecordAired(itemId, past);
+        repo.RecordAired(itemId, future);
+
+        var deleted = repo.PruneAtOrAfter(now);
+
+        Assert.Equal(1, deleted);
+        Assert.Equal(past, repo.GetLastAired(itemId));
+        Assert.Equal(1, repo.GetAiredCount(itemId));
+    }
+
+    [Fact]
+    public void MovieHistory_GetSummary_ReturnsLastAiredAndCountPerItem()
+    {
+        var repo = new MovieHistoryRepository(_db);
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        repo.RecordAired(a, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        repo.RecordAired(a, new DateTime(2026, 1, 5, 0, 0, 0, DateTimeKind.Utc));
+        repo.RecordAired(b, new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc));
+
+        var summary = repo.GetSummary();
+
+        Assert.Equal(new DateTime(2026, 1, 5, 0, 0, 0, DateTimeKind.Utc), summary[a].LastAired);
+        Assert.Equal(2, summary[a].Count);
+        Assert.Equal(new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc), summary[b].LastAired);
+        Assert.Equal(1, summary[b].Count);
+    }
+
+    [Fact]
+    public void GetLastProgramForBlockAtOrBefore_ReturnsMostRecentMatchingBlock_ExcludingFuture()
+    {
+        var repo = new ProgramRepository(_db);
+        var now = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+        var early = new Program { BlockName = "Sitcom Hour", ItemId = Guid.NewGuid(), StartUtc = now.AddHours(-2), EndUtc = now.AddHours(-1) };
+        var recent = new Program { BlockName = "Sitcom Hour", ItemId = Guid.NewGuid(), StartUtc = now.AddMinutes(-30), EndUtc = now.AddMinutes(30) };
+        var future = new Program { BlockName = "Sitcom Hour", ItemId = Guid.NewGuid(), StartUtc = now.AddHours(2), EndUtc = now.AddHours(3) };
+        var otherBlock = new Program { BlockName = "Movie Night", ItemId = Guid.NewGuid(), StartUtc = now.AddMinutes(-10), EndUtc = now.AddHours(1) };
+        repo.ReplaceAll(new[] { early, recent, future, otherBlock });
+
+        var result = repo.GetLastProgramForBlockAtOrBefore("Sitcom Hour", now);
+
+        Assert.NotNull(result);
+        Assert.Equal(recent.ItemId, result!.ItemId);
+    }
 }

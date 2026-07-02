@@ -106,4 +106,42 @@ public class BlockValidatorTests
         Assert.Equal("Good", valid[0].Name);
         Assert.Single(invalid);
     }
+
+    [Fact]
+    public void Validate_RejectsOverlappingBlocks_KeepsTheFirst()
+    {
+        var first = new ProgrammingBlock { Name = "Evening", StartTime = "19:00", EndTime = "23:00" };
+        var overlapping = new ProgrammingBlock { Name = "Late Night", StartTime = "22:00", EndTime = "02:00" };
+
+        var (valid, invalid) = BlockValidator.Validate(new[] { first, overlapping });
+
+        Assert.Single(valid);
+        Assert.Equal("Evening", valid[0].Name);
+        Assert.Single(invalid);
+    }
+
+    [Fact]
+    public void Validate_AcceptsBackToBackBlocks_TouchingEdgesDoNotCountAsOverlap()
+    {
+        var evening = new ProgrammingBlock { Name = "Evening", StartTime = "19:00", EndTime = "23:00" };
+        var lateNight = new ProgrammingBlock { Name = "Late Night", StartTime = "23:00", EndTime = "01:00" };
+        var morning = new ProgrammingBlock { Name = "Morning", StartTime = "01:00", EndTime = "19:00" };
+
+        var (valid, invalid) = BlockValidator.Validate(new[] { evening, lateNight, morning });
+
+        Assert.Equal(3, valid.Count);
+        Assert.Empty(invalid);
+    }
+
+    [Fact]
+    public void Validate_RejectsMidnightWrappingOverlap()
+    {
+        var lateNight = new ProgrammingBlock { Name = "Late Night", StartTime = "23:00", EndTime = "02:00" };
+        var earlyMorning = new ProgrammingBlock { Name = "Early Morning", StartTime = "01:00", EndTime = "06:00" };
+
+        var (valid, invalid) = BlockValidator.Validate(new[] { lateNight, earlyMorning });
+
+        Assert.Single(valid);
+        Assert.Single(invalid);
+    }
 }

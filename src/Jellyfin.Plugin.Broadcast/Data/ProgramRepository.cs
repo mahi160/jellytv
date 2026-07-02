@@ -110,6 +110,27 @@ public class ProgramRepository
     }
 
     /// <summary>
+    /// Finds the most recent Program for a given block that started at or before the given UTC instant —
+    /// i.e. what actually aired on that block, from the schedule about to be replaced. Used to commit
+    /// real Active Series progress (see <see cref="Jellyfin.Plugin.Broadcast.Scheduling.ScheduleRegenerationService"/>)
+    /// instead of whatever the newly generated (entirely future) schedule happens to end on.
+    /// </summary>
+    /// <param name="blockName">The Programming Block's name.</param>
+    /// <param name="atUtc">Upper bound (inclusive) on start time.</param>
+    /// <returns>The most recently started Program for that block, or null if none has aired yet.</returns>
+    public Program? GetLastProgramForBlockAtOrBefore(string blockName, DateTime atUtc)
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, BlockName, ItemId, StartUtc, EndUtc FROM Programs WHERE BlockName = $blockName AND StartUtc <= $at ORDER BY StartUtc DESC LIMIT 1";
+        command.AddParam("$blockName", blockName);
+        command.AddParam("$at", SqliteDateTime.ToText(atUtc));
+
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? ReadProgram(reader) : null;
+    }
+
+    /// <summary>
     /// Finds the first Program starting at or after the given UTC instant.
     /// </summary>
     /// <param name="fromUtc">Lower bound (inclusive) on start time.</param>
