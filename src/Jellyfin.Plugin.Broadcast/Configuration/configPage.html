@@ -2,91 +2,93 @@
 <html lang="en">
 <head>
     <title>Broadcast</title>
-    <style>
-        /* Self-contained styling — the legacy emby-input/emby-button custom elements this page uses
-           don't reliably pick up styling from Jellyfin's newer React/MUI dashboard shell, so this
-           renders its own instead of depending on host CSS. */
-        #BroadcastConfigPage .contentPrimary {
-            max-width: 640px;
-        }
-
-        #BroadcastConfigPage h2 {
-            font-weight: 500;
-            margin: 1.75em 0 0.5em;
-        }
-
-        #BroadcastConfigPage p {
-            color: #999;
-            line-height: 1.5;
-            margin: 0 0 1.25em;
-        }
-
-        #BroadcastConfigPage code {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 0.1em 0.4em;
-            border-radius: 3px;
-        }
-
-        #BroadcastConfigPage .urlRow {
-            margin-bottom: 1.25em;
-        }
-
-        #BroadcastConfigPage .urlLabel {
-            display: block;
-            font-size: 0.85em;
-            color: #999;
-            margin-bottom: 0.4em;
-        }
-
-        #BroadcastConfigPage .urlInputGroup {
-            display: flex;
-            gap: 0.5em;
-        }
-
-        #BroadcastConfigPage .urlInputGroup input {
-            flex: 1;
-            min-width: 0;
-            padding: 0.6em 0.8em;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: inherit;
-            font-family: monospace;
-            font-size: 0.85em;
-        }
-
-        #BroadcastConfigPage button {
-            padding: 0.6em 1.4em;
-            border: none;
-            border-radius: 4px;
-            background: #00a4dc;
-            color: #fff;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        #BroadcastConfigPage button:hover {
-            background: #00728a;
-        }
-
-        #BroadcastConfigPage .copyButton {
-            padding: 0.6em 1em;
-        }
-
-        #BroadcastConfigPage #RegenerateButton {
-            display: block;
-        }
-
-        #BroadcastConfigPage #RegenerateStatus {
-            margin-top: 0.75em;
-            color: #999;
-            font-size: 0.9em;
-        }
-    </style>
 </head>
 <body>
     <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
+        <style>
+            /* Jellyfin's plugin page loader only injects this page's <body> content into the dashboard
+               SPA -- a <style> tag in <head> never survives that, so it lives here instead. Also
+               self-contained rather than relying on the legacy emby-input/emby-button styling, which
+               doesn't reliably apply under the newer React/MUI dashboard shell. */
+            #BroadcastConfigPage .contentPrimary {
+                max-width: 640px;
+            }
+
+            #BroadcastConfigPage h2 {
+                font-weight: 500;
+                margin: 1.75em 0 0.5em;
+            }
+
+            #BroadcastConfigPage p {
+                color: #999;
+                line-height: 1.5;
+                margin: 0 0 1.25em;
+            }
+
+            #BroadcastConfigPage code {
+                background: rgba(255, 255, 255, 0.08);
+                padding: 0.1em 0.4em;
+                border-radius: 3px;
+            }
+
+            #BroadcastConfigPage .urlRow {
+                margin-bottom: 1.25em;
+            }
+
+            #BroadcastConfigPage .urlLabel {
+                display: block;
+                font-size: 0.85em;
+                color: #999;
+                margin-bottom: 0.4em;
+            }
+
+            #BroadcastConfigPage .urlInputGroup {
+                display: flex;
+                gap: 0.5em;
+            }
+
+            #BroadcastConfigPage .urlInputGroup input {
+                flex: 1;
+                min-width: 0;
+                padding: 0.6em 0.8em;
+                border-radius: 4px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                background: rgba(255, 255, 255, 0.05);
+                color: inherit;
+                font-family: monospace;
+                font-size: 0.85em;
+            }
+
+            #BroadcastConfigPage button {
+                padding: 0.6em 1.4em;
+                border: none;
+                border-radius: 4px;
+                background: #00a4dc;
+                color: #fff;
+                font-weight: 500;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            #BroadcastConfigPage button:hover {
+                background: #00728a;
+            }
+
+            #BroadcastConfigPage .copyButton {
+                padding: 0.6em 1em;
+            }
+
+            #BroadcastConfigPage #RegenerateButton {
+                display: block;
+            }
+
+            #BroadcastConfigPage #RegenerateStatus {
+                margin-top: 0.75em;
+                color: #999;
+                font-size: 0.9em;
+            }
+        </style>
+
         <div data-role="content">
             <div class="contentPrimary">
                 <div class="verticalSection">
@@ -131,6 +133,7 @@
     <script type="text/javascript">
         (function () {
             var page = document.querySelector('#BroadcastConfigPage');
+            var initialized = false;
 
             function renderWatchUrls() {
                 // Deliberately NOT ApiClient.accessToken(): that's the admin's personal session token —
@@ -141,10 +144,45 @@
                 page.querySelector('#StreamUrl').value = ApiClient.getUrl('Broadcast/Channel/Stream', { api_key: placeholder });
             }
 
-            page.addEventListener('pageshow', function () {
+            // Jellyfin fires a custom 'pageshow' on this element when the dashboard navigates here, but
+            // that doesn't reliably happen on every dashboard version/navigation path — so this also runs
+            // immediately at script load. Both paths are idempotent (just re-set the same values), so
+            // running twice is harmless; the point is making sure it runs at least once.
+            function init() {
+                if (initialized || typeof ApiClient === 'undefined') {
+                    return;
+                }
+
+                initialized = true;
                 renderWatchUrls();
-                page.querySelector('#RegenerateStatus').textContent = '';
+                var status = page.querySelector('#RegenerateStatus');
+                if (status) {
+                    status.textContent = '';
+                }
+            }
+
+            page.addEventListener('pageshow', function () {
+                initialized = false; // allow re-populating (e.g. after a session/API key change) on re-entry
+                init();
             });
+
+            try {
+                init();
+            } catch (e) {
+                // ApiClient may not be ready yet at this exact point in some dashboard versions;
+                // pageshow (or the fallback poll below) will pick it up.
+            }
+
+            if (!initialized) {
+                var attempts = 0;
+                var poll = setInterval(function () {
+                    attempts++;
+                    init();
+                    if (initialized || attempts > 20) {
+                        clearInterval(poll);
+                    }
+                }, 100);
+            }
 
             page.querySelectorAll('.copyUrlButton').forEach(function (btn) {
                 btn.addEventListener('click', function () {

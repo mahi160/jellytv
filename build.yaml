@@ -1,7 +1,7 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.5.1"
+version: "0.2.5.2"
 targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
@@ -18,8 +18,9 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  Fix: config page was unstyled (raw white inputs, full-width flat button) -- the legacy
-  emby-input/emby-button custom elements it used don't reliably pick up styling from Jellyfin's newer
-  React/MUI dashboard shell. Rebuilt with self-contained CSS instead of depending on host CSS. Also
-  includes 0.2.5.0's simplification: config page no longer exposes Channel settings or a Programming
-  Block editor -- ships with a single default "All Day Movies" block that just works out of the box.
+  Fix: config page still had no styling and the Watch URL fields showed empty. Root cause: Jellyfin's
+  plugin page loader only injects the page's <body> content into the dashboard SPA, so the previous
+  fix's <style> tag (in <head>) never applied -- moved inside the body. Also, the custom 'pageshow'
+  event Jellyfin fires on plugin pages doesn't reliably trigger on every dashboard version --
+  initialization now runs immediately at script load (with a short retry poll) in addition to pageshow.
+  Also includes 0.2.5.1/0.2.5.0's earlier fixes/simplification of this same config page.

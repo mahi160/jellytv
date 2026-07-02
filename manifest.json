@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.5.2",
+        "changelog": "Fix: config page still had no styling and the Watch URL fields showed empty. Root cause: Jellyfin's plugin page loader only injects the page's <body> content into the dashboard SPA, so the previous fix's <style> tag (in <head>) never applied -- moved inside the body. Also, the custom 'pageshow' event Jellyfin fires on plugin pages doesn't reliably trigger on every dashboard version -- initialization now runs immediately at script load (with a short retry poll) in addition to pageshow.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.5.2/Broadcast_0.2.5.2.zip",
+        "checksum": "155c2659f2b6e9192bc6de5a06b271c2",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.5.1",
         "changelog": "Fix: config page was unstyled (raw white inputs, full-width flat button) -- the legacy emby-input/emby-button custom elements it used don't reliably pick up styling from Jellyfin's newer React/MUI dashboard shell. Rebuilt with self-contained CSS instead of depending on host CSS.",
         "targetAbi": "10.11.8.0",
