@@ -2,44 +2,127 @@
 <html lang="en">
 <head>
     <title>Broadcast</title>
+    <style>
+        /* Self-contained styling — the legacy emby-input/emby-button custom elements this page uses
+           don't reliably pick up styling from Jellyfin's newer React/MUI dashboard shell, so this
+           renders its own instead of depending on host CSS. */
+        #BroadcastConfigPage .contentPrimary {
+            max-width: 640px;
+        }
+
+        #BroadcastConfigPage h2 {
+            font-weight: 500;
+            margin: 1.75em 0 0.5em;
+        }
+
+        #BroadcastConfigPage p {
+            color: #999;
+            line-height: 1.5;
+            margin: 0 0 1.25em;
+        }
+
+        #BroadcastConfigPage code {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.1em 0.4em;
+            border-radius: 3px;
+        }
+
+        #BroadcastConfigPage .urlRow {
+            margin-bottom: 1.25em;
+        }
+
+        #BroadcastConfigPage .urlLabel {
+            display: block;
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 0.4em;
+        }
+
+        #BroadcastConfigPage .urlInputGroup {
+            display: flex;
+            gap: 0.5em;
+        }
+
+        #BroadcastConfigPage .urlInputGroup input {
+            flex: 1;
+            min-width: 0;
+            padding: 0.6em 0.8em;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+
+        #BroadcastConfigPage button {
+            padding: 0.6em 1.4em;
+            border: none;
+            border-radius: 4px;
+            background: #00a4dc;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        #BroadcastConfigPage button:hover {
+            background: #00728a;
+        }
+
+        #BroadcastConfigPage .copyButton {
+            padding: 0.6em 1em;
+        }
+
+        #BroadcastConfigPage #RegenerateButton {
+            display: block;
+        }
+
+        #BroadcastConfigPage #RegenerateStatus {
+            margin-top: 0.75em;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-    <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
+    <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
         <div data-role="content">
-            <div class="content-primary">
+            <div class="contentPrimary">
                 <div class="verticalSection">
                     <h2>Watch</h2>
                     <p>Paste these into Jellyfin's own Live TV setup to add this channel with a guide.
                         Replace <code>YOUR_API_KEY</code> in each URL with a dedicated key from
                         Dashboard &gt; API Keys &mdash; don't use your personal login, it stops working when you log out.</p>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="M3uUrl">M3U Playlist URL (Live TV &rarr; Tuner Devices &rarr; M3U Tuner)</label>
-                        <input is="emby-input" type="text" id="M3uUrl" readonly="readonly" />
-                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="M3uUrl">
-                            <span>Copy</span>
-                        </button>
+
+                    <div class="urlRow">
+                        <label class="urlLabel" for="M3uUrl">M3U Playlist URL (Live TV &rarr; Tuner Devices &rarr; M3U Tuner)</label>
+                        <div class="urlInputGroup">
+                            <input type="text" id="M3uUrl" readonly="readonly" />
+                            <button type="button" class="copyButton copyUrlButton" data-target="M3uUrl">Copy</button>
+                        </div>
                     </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="XmlTvUrl">XMLTV Guide URL (Live TV &rarr; Guide Data Providers &rarr; XMLTV)</label>
-                        <input is="emby-input" type="text" id="XmlTvUrl" readonly="readonly" />
-                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="XmlTvUrl">
-                            <span>Copy</span>
-                        </button>
+
+                    <div class="urlRow">
+                        <label class="urlLabel" for="XmlTvUrl">XMLTV Guide URL (Live TV &rarr; Guide Data Providers &rarr; XMLTV)</label>
+                        <div class="urlInputGroup">
+                            <input type="text" id="XmlTvUrl" readonly="readonly" />
+                            <button type="button" class="copyButton copyUrlButton" data-target="XmlTvUrl">Copy</button>
+                        </div>
                     </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="StreamUrl">Direct Stream URL (paste into VLC/any IPTV player)</label>
-                        <input is="emby-input" type="text" id="StreamUrl" readonly="readonly" />
-                        <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="StreamUrl">
-                            <span>Copy</span>
-                        </button>
+
+                    <div class="urlRow">
+                        <label class="urlLabel" for="StreamUrl">Direct Stream URL (paste into VLC/any IPTV player)</label>
+                        <div class="urlInputGroup">
+                            <input type="text" id="StreamUrl" readonly="readonly" />
+                            <button type="button" class="copyButton copyUrlButton" data-target="StreamUrl">Copy</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="verticalSection">
                     <h2>Actions</h2>
-                    <button is="emby-button" type="button" id="RegenerateButton" class="raised block emby-button">
-                        <span>Regenerate Schedule Now</span>
-                    </button>
+                    <button type="button" id="RegenerateButton">Regenerate Schedule Now</button>
                     <div id="RegenerateStatus"></div>
                 </div>
             </div>

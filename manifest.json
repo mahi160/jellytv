@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.5.1",
+        "changelog": "Fix: config page was unstyled (raw white inputs, full-width flat button) -- the legacy emby-input/emby-button custom elements it used don't reliably pick up styling from Jellyfin's newer React/MUI dashboard shell. Rebuilt with self-contained CSS instead of depending on host CSS.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.5.1/Broadcast_0.2.5.1.zip",
+        "checksum": "482b38cb1c5f170f4a11a99e593a70e3",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.5.0",
         "changelog": "V1 simplification: the config page no longer exposes Channel settings or a Programming Block editor -- ships with a single default 'All Day Movies' block (all libraries, no filters) that just works out of the box. Config page now shows only the Watch URLs (M3U/XMLTV/Stream) and a Regenerate button. A runtime fallback ensures any config that previously persisted an empty Blocks list still gets the default instead of staying permanently empty.",
         "targetAbi": "10.11.8.0",

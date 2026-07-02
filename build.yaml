@@ -1,7 +1,7 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.5.0"
+version: "0.2.5.1"
 targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
@@ -18,8 +18,8 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  V1 simplification: the config page no longer exposes Channel settings or a Programming Block editor
-  -- ships with a single default "All Day Movies" block (all libraries, no filters) that just works out
-  of the box. Config page now shows only the Watch URLs (M3U/XMLTV/Stream) and a Regenerate button. A
-  runtime fallback ensures any config that previously persisted an empty Blocks list still gets the
-  default instead of staying permanently empty.
+  Fix: config page was unstyled (raw white inputs, full-width flat button) -- the legacy
+  emby-input/emby-button custom elements it used don't reliably pick up styling from Jellyfin's newer
+  React/MUI dashboard shell. Rebuilt with self-contained CSS instead of depending on host CSS. Also
+  includes 0.2.5.0's simplification: config page no longer exposes Channel settings or a Programming
+  Block editor -- ships with a single default "All Day Movies" block that just works out of the box.
