@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.5.0",
+        "changelog": "V1 simplification: the config page no longer exposes Channel settings or a Programming Block editor -- ships with a single default 'All Day Movies' block (all libraries, no filters) that just works out of the box. Config page now shows only the Watch URLs (M3U/XMLTV/Stream) and a Regenerate button. A runtime fallback ensures any config that previously persisted an empty Blocks list still gets the default instead of staying permanently empty.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.5.0/Broadcast_0.2.5.0.zip",
+        "checksum": "087864f14e523595e57824c1378e5e42",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.4.2",
         "changelog": "Fix: the TimeZone autocomplete field's initialization code ran at script top-level instead of inside the pageshow handler (unlike every other DOM-touching part of the config page). In real dashboard load timing this threw before the rest of the script -- Programming Blocks table, Add Block button, copy-to-clipboard buttons, and the Save Channel Settings form handler -- ever got registered, silently breaking the entire config page. Deferred into pageshow and wrapped defensively.",
         "targetAbi": "10.11.8.0",

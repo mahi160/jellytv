@@ -20,9 +20,9 @@ dotnet test
    Jellyfin server's plugin directory, in its own subfolder, e.g.:
    `<jellyfin-data-dir>/plugins/Broadcast_0.1.0.0/Jellyfin.Plugin.Broadcast.dll`
 3. Restart Jellyfin.
-4. Configure the channel and Programming Blocks under **Dashboard → Plugins → Broadcast**.
-5. Click **Regenerate Schedule Now**, or wait for the daily scheduled task
-   (**Dashboard → Scheduled Tasks → Regenerate Broadcast Schedule**).
+4. That's it — V1 ships with a default "All Day Movies" block (all libraries, no filters) and needs
+   no configuration. Go to **Dashboard → Plugins → Broadcast** to grab the M3U/XMLTV/Stream URLs, or
+   click **Regenerate Schedule Now** (it also runs automatically: daily, and on library changes).
 
 ## Using the channel
 
@@ -50,8 +50,6 @@ header) — there's no anonymous access, by design (see PRD non-goals).
 - `/Broadcast/Channel/Stream`'s `api_key` passthrough is URL-encoded (was a header-injection/
   open-redirect vector) and no longer forces `static=true`, so Jellyfin can transcode incompatible
   content instead of failing outright.
-- The config page's Programming Block table is built via safe DOM APIs, not `innerHTML` string
-  concatenation (was a stored-XSS vector via block names).
 
 ## Known limitations (V1)
 

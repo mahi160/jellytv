@@ -82,7 +82,11 @@ public class ScheduleRegenerationService
     {
         var started = DateTime.UtcNow;
 
-        var (validBlocks, invalidBlocks) = BlockValidator.Validate(config.Blocks);
+        // A config that persisted an empty Blocks list before the default (see PluginConfiguration) was
+        // introduced would otherwise be stuck with an empty schedule forever — there's no block-editing
+        // UI in V1 to fix that from the dashboard.
+        var blocks = config.Blocks.Count > 0 ? config.Blocks : PluginConfiguration.CreateDefaultBlocks();
+        var (validBlocks, invalidBlocks) = BlockValidator.Validate(blocks);
         foreach (var (block, reason) in invalidBlocks)
         {
             _logger.LogWarning("Skipping Programming Block '{BlockName}': {Reason}", block.Name, reason);

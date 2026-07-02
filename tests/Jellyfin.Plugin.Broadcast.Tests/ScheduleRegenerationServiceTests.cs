@@ -50,7 +50,10 @@ public class ScheduleRegenerationServiceTests : IDisposable
 
     private static PluginConfiguration ConfigWith(params ProgrammingBlock[] blocks)
     {
+        // Clear the shipped default block (see PluginConfiguration ctor) — these tests exercise
+        // specific block configurations, not the out-of-the-box default.
         var config = new PluginConfiguration { ScheduleDurationDays = 1, TimeZone = "UTC" };
+        config.Blocks.Clear();
         config.Blocks.AddRange(blocks);
         return config;
     }

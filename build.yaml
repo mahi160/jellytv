@@ -1,7 +1,7 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.4.2"
+version: "0.2.5.0"
 targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
@@ -18,20 +18,8 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  Fix: the TimeZone autocomplete field's initialization code ran at script top-level instead of inside
-  the pageshow handler (unlike every other DOM-touching part of the config page). In real dashboard load
-  timing this threw before the rest of the script -- Programming Blocks table, Add Block button,
-  copy-to-clipboard buttons, and the Save Channel Settings form handler -- ever got registered, silently
-  breaking the entire config page (static HTML rendered, nothing was interactive). Deferred into pageshow
-  and wrapped defensively so this can't happen again. Also includes 0.2.4.1's fix: the plugin package
-  now bundles a meta.json assembly whitelist so Jellyfin's plugin loader doesn't try to load native
-  SQLite runtime binaries as managed assemblies (which disabled the plugin entirely). Also includes
-  0.2.4.0's fixes: regenerating the schedule advanced each block's Active Series and inflated movie
-  airing counts by a full schedule's worth every time, and cut off whatever was currently playing --
-  Active Series/Cooldown history is now committed from what actually aired, and the currently-playing
-  program is preserved across regeneration. A full library query ran per scheduled program instead of
-  once per block, and movie history was queried per candidate per pick instead of once per run -- both
-  are now cached/batched. A DST spring-forward could crash regeneration; overlapping Programming Blocks
-  are now rejected at validation; the XMLTV guide was missing whatever's airing right now. Security:
-  manual Regenerate now requires elevated privileges; the config page no longer embeds the admin's
-  session token in the M3U/XMLTV/Stream URLs.
+  V1 simplification: the config page no longer exposes Channel settings or a Programming Block editor
+  -- ships with a single default "All Day Movies" block (all libraries, no filters) that just works out
+  of the box. Config page now shows only the Watch URLs (M3U/XMLTV/Stream) and a Regenerate button. A
+  runtime fallback ensures any config that previously persisted an empty Blocks list still gets the
+  default instead of staying permanently empty.

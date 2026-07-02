@@ -142,8 +142,24 @@ public class PluginConfiguration : BasePluginConfiguration
         TimeZone = "UTC";
         ScheduleDurationDays = 7;
         RegenerationTime = "04:00";
-        Blocks = new List<ProgrammingBlock>();
+
+        // V1 ships with no block-editing UI (see configPage.html) — a single all-day, all-library
+        // Movie block is the entire default setup, so a fresh install has something to schedule
+        // without requiring any configuration at all.
+        Blocks = CreateDefaultBlocks();
     }
+
+    /// <summary>
+    /// Builds the default Programming Block(s). Used both as the constructor default and as a runtime
+    /// fallback (see <see cref="Scheduling.ScheduleRegenerationService"/>) for configs that already
+    /// persisted an empty Blocks list from before this default existed — a ctor default alone can't
+    /// retroactively fix an already-serialized empty list on disk.
+    /// </summary>
+    /// <returns>The default Programming Blocks.</returns>
+    public static List<ProgrammingBlock> CreateDefaultBlocks() => new()
+    {
+        new() { Name = "All Day Movies", StartTime = "00:00", EndTime = "23:59", ContentType = BlockContentType.Movie }
+    };
 
     /// <summary>Gets or sets the channel's display name.</summary>
     public string ChannelName { get; set; }

@@ -4,170 +4,23 @@
     <title>Broadcast</title>
 </head>
 <body>
-    <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <div id="BroadcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
         <div data-role="content">
             <div class="content-primary">
-                <form id="BroadcastChannelForm">
-                    <div class="verticalSection">
-                        <h2>Channel</h2>
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="ChannelName">Channel Name</label>
-                            <input is="emby-input" type="text" id="ChannelName" name="ChannelName" />
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="TimeZone">Time Zone (IANA name)</label>
-                            <input is="emby-input" type="text" id="TimeZone" name="TimeZone" list="TimeZoneOptions" />
-                            <datalist id="TimeZoneOptions"></datalist>
-                            <div class="fieldDescription" id="TimeZoneWarning" style="display:none;color:#d32f2f">Not a recognized time zone — the schedule will fall back to UTC until this is fixed.</div>
-                        </div>
-                        <div class="selectContainer">
-                            <label class="selectLabel" for="ScheduleDurationDays">Schedule Duration</label>
-                            <select is="emby-select" id="ScheduleDurationDays" name="ScheduleDurationDays">
-                                <option value="1">1 day</option>
-                                <option value="7">7 days</option>
-                                <option value="30">30 days</option>
-                            </select>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="RegenerationTime">Daily Regeneration Time</label>
-                            <input is="emby-input" type="time" id="RegenerationTime" name="RegenerationTime" />
-                            <div class="fieldDescription">Only used the first time this task is created — to change it later, use Dashboard &gt; Scheduled Tasks &gt; Regenerate Broadcast Schedule.</div>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="ChannelLogoUrl">Channel Logo URL (optional)</label>
-                            <input is="emby-input" type="text" id="ChannelLogoUrl" name="ChannelLogoUrl" />
-                        </div>
-                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                            <span>Save Channel Settings</span>
-                        </button>
-                    </div>
-                </form>
-
-                <div class="verticalSection">
-                    <h2>Programming Blocks</h2>
-                    <table class="detailTable" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Time</th>
-                                <th>Type</th>
-                                <th>Order</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="BlocksTableBody"></tbody>
-                    </table>
-                    <button is="emby-button" type="button" id="AddBlockButton" class="raised block emby-button">
-                        <span>Add Block</span>
-                    </button>
-                </div>
-
-                <form id="BlockEditForm" class="verticalSection" style="display:none">
-                    <h2 id="BlockEditTitle">Block</h2>
-                    <input type="hidden" id="BlockIndex" value="-1" />
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockName">Name</label>
-                        <input is="emby-input" type="text" id="BlockName" required />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockStartTime">Start Time</label>
-                        <input is="emby-input" type="time" id="BlockStartTime" required />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockEndTime">End Time</label>
-                        <input is="emby-input" type="time" id="BlockEndTime" required />
-                    </div>
-                    <div class="selectContainer">
-                        <label class="selectLabel" for="BlockContentType">Content Type</label>
-                        <select is="emby-select" id="BlockContentType">
-                            <option value="Movie">Movie</option>
-                            <option value="Episode">Episode</option>
-                        </select>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockLibraries">Libraries (comma-separated, blank = all)</label>
-                        <input is="emby-input" type="text" id="BlockLibraries" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockGenres">Genres (comma-separated)</label>
-                        <input is="emby-input" type="text" id="BlockGenres" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockTags">Tags (comma-separated)</label>
-                        <input is="emby-input" type="text" id="BlockTags" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockMinRating">Minimum Rating</label>
-                        <input is="emby-input" type="number" step="0.1" id="BlockMinRating" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockMinYear">Minimum Year</label>
-                        <input is="emby-input" type="number" id="BlockMinYear" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="BlockMaxYear">Maximum Year</label>
-                        <input is="emby-input" type="number" id="BlockMaxYear" />
-                    </div>
-                    <div class="checkboxContainer">
-                        <label>
-                            <input is="emby-checkbox" type="checkbox" id="BlockFavoritesOnly" />
-                            <span>Favorites Only</span>
-                        </label>
-                    </div>
-                    <div class="selectContainer">
-                        <label class="selectLabel" for="BlockOrder">Ordering</label>
-                        <select is="emby-select" id="BlockOrder">
-                            <option value="Sequential">Sequential</option>
-                            <option value="Random">Random</option>
-                            <option value="WeightedRandom">Weighted Random</option>
-                            <option value="Chronological">Oldest First (Chronological)</option>
-                            <option value="NewestFirst">Newest First</option>
-                            <option value="LeastPlayed">Least Played</option>
-                            <option value="NeverPlayed">Never Played</option>
-                        </select>
-                    </div>
-                    <div class="selectContainer" id="WeightFactorContainer">
-                        <label class="selectLabel" for="BlockWeightFactor">Weighted Random Factor</label>
-                        <select is="emby-select" id="BlockWeightFactor">
-                            <option value="Rating">Rating</option>
-                            <option value="Recency">Recency</option>
-                            <option value="PlayCount">Play Count</option>
-                        </select>
-                    </div>
-                    <div class="inputContainer" id="MovieCooldownContainer">
-                        <label class="inputLabel" for="BlockMovieCooldownDays">Movie Cooldown (days)</label>
-                        <input is="emby-input" type="number" id="BlockMovieCooldownDays" />
-                    </div>
-                    <div class="selectContainer" id="SeriesEndBehaviorContainer">
-                        <label class="selectLabel" for="BlockSeriesEndBehavior">When a series finishes</label>
-                        <select is="emby-select" id="BlockSeriesEndBehavior">
-                            <option value="SelectAnotherSeries">Select another series</option>
-                            <option value="Restart">Restart the series</option>
-                            <option value="Random">Pick a random series</option>
-                        </select>
-                    </div>
-                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                        <span>Save Block</span>
-                    </button>
-                    <button is="emby-button" type="button" id="CancelBlockEditButton" class="raised block emby-button">
-                        <span>Cancel</span>
-                    </button>
-                </form>
-
                 <div class="verticalSection">
                     <h2>Watch</h2>
                     <p>Paste these into Jellyfin's own Live TV setup to add this channel with a guide.
                         Replace <code>YOUR_API_KEY</code> in each URL with a dedicated key from
-                        Dashboard &gt; API Keys — don't use your personal login, it stops working when you log out.</p>
+                        Dashboard &gt; API Keys &mdash; don't use your personal login, it stops working when you log out.</p>
                     <div class="inputContainer">
-                        <label class="inputLabel" for="M3uUrl">M3U Playlist URL (Live TV → Tuner Devices → M3U Tuner)</label>
+                        <label class="inputLabel" for="M3uUrl">M3U Playlist URL (Live TV &rarr; Tuner Devices &rarr; M3U Tuner)</label>
                         <input is="emby-input" type="text" id="M3uUrl" readonly="readonly" />
                         <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="M3uUrl">
                             <span>Copy</span>
                         </button>
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel" for="XmlTvUrl">XMLTV Guide URL (Live TV → Guide Data Providers → XMLTV)</label>
+                        <label class="inputLabel" for="XmlTvUrl">XMLTV Guide URL (Live TV &rarr; Guide Data Providers &rarr; XMLTV)</label>
                         <input is="emby-input" type="text" id="XmlTvUrl" readonly="readonly" />
                         <button is="emby-button" type="button" class="raised mini copyUrlButton" data-target="XmlTvUrl">
                             <span>Copy</span>
@@ -194,158 +47,11 @@
     </div>
     <script type="text/javascript">
         (function () {
-            var pluginId = 'a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b';
             var page = document.querySelector('#BroadcastConfigPage');
-            var blocks = [];
-
-            // Populated from the browser's own IANA database (zero server round-trip) so the free-text
-            // TimeZone field gets autocomplete and can be validated before saving. Deferred to pageshow
-            // (like everything else DOM-related here) instead of running at script top-level — a failed
-            // lookup here must never throw before the rest of the script (block table, watch URLs, form
-            // handlers) gets to register.
-            function populateTimeZoneOptions() {
-                try {
-                    if (!window.Intl || !Intl.supportedValuesOf) {
-                        return;
-                    }
-
-                    var datalist = page.querySelector('#TimeZoneOptions');
-                    if (!datalist || datalist.childElementCount > 0) {
-                        return;
-                    }
-
-                    Intl.supportedValuesOf('timeZone').forEach(function (tz) {
-                        var option = document.createElement('option');
-                        option.value = tz;
-                        datalist.appendChild(option);
-                    });
-                } catch (e) {
-                    // Autocomplete is a nice-to-have; never let it break the rest of the page.
-                }
-            }
-
-            function isKnownTimeZone(tz) {
-                if (!window.Intl || !Intl.supportedValuesOf) {
-                    return true; // can't validate on this browser — don't block saving
-                }
-
-                return Intl.supportedValuesOf('timeZone').indexOf(tz) !== -1;
-            }
-
-            function csv(value) {
-                return (value || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
-            }
-
-            function textCell(text) {
-                var td = document.createElement('td');
-                td.textContent = text;
-                return td;
-            }
-
-            function actionButton(label, className, index, onClick) {
-                var btn = document.createElement('button');
-                btn.setAttribute('is', 'emby-button');
-                btn.type = 'button';
-                btn.className = 'raised mini ' + className;
-                var span = document.createElement('span');
-                span.textContent = label;
-                btn.appendChild(span);
-                btn.addEventListener('click', function () { onClick(index); });
-                return btn;
-            }
-
-            function renderBlocksTable() {
-                // Built via DOM APIs (textContent), not innerHTML — block names etc. are admin-entered
-                // and must not be interpreted as HTML when re-rendered (stored-XSS risk otherwise).
-                var body = page.querySelector('#BlocksTableBody');
-                body.innerHTML = '';
-                blocks.forEach(function (block, index) {
-                    var row = document.createElement('tr');
-                    row.appendChild(textCell(block.Name));
-                    row.appendChild(textCell(block.StartTime + ' - ' + block.EndTime));
-                    row.appendChild(textCell(block.ContentType));
-                    row.appendChild(textCell(block.Order));
-
-                    var actionsCell = document.createElement('td');
-                    actionsCell.appendChild(actionButton('Edit', 'editBlock', index, openBlockEditor));
-                    actionsCell.appendChild(document.createTextNode(' '));
-                    actionsCell.appendChild(actionButton('Delete', 'deleteBlock', index, deleteBlock));
-                    row.appendChild(actionsCell);
-
-                    body.appendChild(row);
-                });
-            }
-
-            function openBlockEditor(index) {
-                var form = page.querySelector('#BlockEditForm');
-                var block = index >= 0 ? blocks[index] : {
-                    Name: '', StartTime: '', EndTime: '', ContentType: 'Movie',
-                    Libraries: [], Genres: [], Tags: [], MinRating: null, MinYear: null, MaxYear: null,
-                    FavoritesOnly: false, Order: 'Random', WeightFactor: 'Rating', MovieCooldownDays: 30,
-                    SeriesEndBehavior: 'SelectAnotherSeries'
-                };
-
-                page.querySelector('#BlockIndex').value = index;
-                page.querySelector('#BlockEditTitle').textContent = index >= 0 ? 'Edit Block' : 'Add Block';
-                page.querySelector('#BlockName').value = block.Name || '';
-                page.querySelector('#BlockStartTime').value = block.StartTime || '';
-                page.querySelector('#BlockEndTime').value = block.EndTime || '';
-                page.querySelector('#BlockContentType').value = block.ContentType || 'Movie';
-                page.querySelector('#BlockLibraries').value = (block.Libraries || []).join(', ');
-                page.querySelector('#BlockGenres').value = (block.Genres || []).join(', ');
-                page.querySelector('#BlockTags').value = (block.Tags || []).join(', ');
-                page.querySelector('#BlockMinRating').value = block.MinRating != null ? block.MinRating : '';
-                page.querySelector('#BlockMinYear').value = block.MinYear != null ? block.MinYear : '';
-                page.querySelector('#BlockMaxYear').value = block.MaxYear != null ? block.MaxYear : '';
-                page.querySelector('#BlockFavoritesOnly').checked = !!block.FavoritesOnly;
-                page.querySelector('#BlockOrder').value = block.Order || 'Random';
-                page.querySelector('#BlockWeightFactor').value = block.WeightFactor || 'Rating';
-                page.querySelector('#BlockMovieCooldownDays').value = block.MovieCooldownDays != null ? block.MovieCooldownDays : 30;
-                page.querySelector('#BlockSeriesEndBehavior').value = block.SeriesEndBehavior || 'SelectAnotherSeries';
-
-                updateBlockFormVisibility();
-                form.style.display = '';
-                form.scrollIntoView({ behavior: 'smooth' });
-            }
-
-            function closeBlockEditor() {
-                page.querySelector('#BlockEditForm').style.display = 'none';
-            }
-
-            // Toggles the fields that only make sense for the current ContentType/Order selection —
-            // without this every block editor showed all 14 fields regardless of relevance.
-            function updateBlockFormVisibility() {
-                var isMovie = page.querySelector('#BlockContentType').value === 'Movie';
-                page.querySelector('#MovieCooldownContainer').style.display = isMovie ? '' : 'none';
-                page.querySelector('#SeriesEndBehaviorContainer').style.display = isMovie ? 'none' : '';
-                page.querySelector('#WeightFactorContainer').style.display =
-                    page.querySelector('#BlockOrder').value === 'WeightedRandom' ? '' : 'none';
-            }
-
-            function deleteBlock(index) {
-                if (!confirm('Delete block "' + blocks[index].Name + '"? This regenerates the schedule.')) {
-                    return;
-                }
-
-                blocks.splice(index, 1);
-                renderBlocksTable();
-                saveBlocks();
-            }
-
-            function saveBlocks() {
-                Dashboard.showLoadingMsg();
-                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                    config.Blocks = blocks;
-                    return ApiClient.updatePluginConfiguration(pluginId, config);
-                }).then(function (result) {
-                    Dashboard.processPluginConfigurationUpdateResult(result);
-                });
-            }
 
             function renderWatchUrls() {
                 // Deliberately NOT ApiClient.accessToken(): that's the admin's personal session token —
                 // pasted into an IPTV player it grants full admin API access and stops working on logout.
-                // A dedicated API key (Dashboard > API Keys) never expires and can be revoked independently.
                 var placeholder = 'YOUR_API_KEY';
                 page.querySelector('#M3uUrl').value = ApiClient.getUrl('Broadcast/m3u', { api_key: placeholder });
                 page.querySelector('#XmlTvUrl').value = ApiClient.getUrl('Broadcast/xmltv', { api_key: placeholder });
@@ -353,20 +59,8 @@
             }
 
             page.addEventListener('pageshow', function () {
-                Dashboard.showLoadingMsg();
-                populateTimeZoneOptions();
-                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                    page.querySelector('#ChannelName').value = config.ChannelName || '';
-                    page.querySelector('#ChannelLogoUrl').value = config.ChannelLogoUrl || '';
-                    page.querySelector('#TimeZone').value = config.TimeZone || '';
-                    page.querySelector('#ScheduleDurationDays').value = config.ScheduleDurationDays || 7;
-                    page.querySelector('#RegenerationTime').value = config.RegenerationTime || '04:00';
-                    blocks = config.Blocks || [];
-                    renderBlocksTable();
-                    renderWatchUrls();
-                    page.querySelector('#RegenerateStatus').textContent = '';
-                    Dashboard.hideLoadingMsg();
-                });
+                renderWatchUrls();
+                page.querySelector('#RegenerateStatus').textContent = '';
             });
 
             page.querySelectorAll('.copyUrlButton').forEach(function (btn) {
@@ -374,67 +68,6 @@
                     var input = page.querySelector('#' + btn.getAttribute('data-target'));
                     navigator.clipboard.writeText(input.value);
                 });
-            });
-
-            page.querySelector('#BroadcastChannelForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                Dashboard.showLoadingMsg();
-                var timeZoneValue = page.querySelector('#TimeZone').value;
-                page.querySelector('#TimeZoneWarning').style.display = isKnownTimeZone(timeZoneValue) ? 'none' : '';
-
-                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                    config.ChannelName = page.querySelector('#ChannelName').value;
-                    config.ChannelLogoUrl = page.querySelector('#ChannelLogoUrl').value || null;
-                    config.TimeZone = timeZoneValue;
-                    config.ScheduleDurationDays = parseInt(page.querySelector('#ScheduleDurationDays').value, 10);
-                    config.RegenerationTime = page.querySelector('#RegenerationTime').value;
-                    return ApiClient.updatePluginConfiguration(pluginId, config);
-                }).then(function (result) {
-                    Dashboard.processPluginConfigurationUpdateResult(result);
-                });
-                return false;
-            });
-
-            page.querySelector('#AddBlockButton').addEventListener('click', function () { openBlockEditor(-1); });
-            page.querySelector('#CancelBlockEditButton').addEventListener('click', closeBlockEditor);
-            page.querySelector('#BlockContentType').addEventListener('change', updateBlockFormVisibility);
-            page.querySelector('#BlockOrder').addEventListener('change', updateBlockFormVisibility);
-
-            page.querySelector('#BlockEditForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                var index = parseInt(page.querySelector('#BlockIndex').value, 10);
-                var minRatingVal = page.querySelector('#BlockMinRating').value;
-                var minYearVal = page.querySelector('#BlockMinYear').value;
-                var maxYearVal = page.querySelector('#BlockMaxYear').value;
-
-                var block = {
-                    Name: page.querySelector('#BlockName').value,
-                    StartTime: page.querySelector('#BlockStartTime').value,
-                    EndTime: page.querySelector('#BlockEndTime').value,
-                    ContentType: page.querySelector('#BlockContentType').value,
-                    Libraries: csv(page.querySelector('#BlockLibraries').value),
-                    Genres: csv(page.querySelector('#BlockGenres').value),
-                    Tags: csv(page.querySelector('#BlockTags').value),
-                    MinRating: minRatingVal === '' ? null : parseFloat(minRatingVal),
-                    MinYear: minYearVal === '' ? null : parseInt(minYearVal, 10),
-                    MaxYear: maxYearVal === '' ? null : parseInt(maxYearVal, 10),
-                    FavoritesOnly: page.querySelector('#BlockFavoritesOnly').checked,
-                    Order: page.querySelector('#BlockOrder').value,
-                    WeightFactor: page.querySelector('#BlockWeightFactor').value,
-                    MovieCooldownDays: parseInt(page.querySelector('#BlockMovieCooldownDays').value, 10) || 30,
-                    SeriesEndBehavior: page.querySelector('#BlockSeriesEndBehavior').value
-                };
-
-                if (index >= 0) {
-                    blocks[index] = block;
-                } else {
-                    blocks.push(block);
-                }
-
-                renderBlocksTable();
-                closeBlockEditor();
-                saveBlocks();
-                return false;
             });
 
             page.querySelector('#RegenerateButton').addEventListener('click', function () {
