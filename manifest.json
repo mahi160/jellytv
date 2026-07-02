@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.6.1",
+        "changelog": "Fix (actual root cause this time): the <script> tag was a sibling AFTER the closing </div> of the page's data-role='page' container, not a descendant of it. Jellyfin's web client extracts content via querySelector('div[data-role=\"page\"]') and only executes a script if it's inside that extracted subtree -- a sibling script is silently dropped and never runs, regardless of its own internal timing. Moved the script inside the page div.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.6.1/Broadcast_0.2.6.1.zip",
+        "checksum": "e719a462bab8b2aa606b586510f76cb8",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.6.0",
         "changelog": "Security fix: FeedController (/Broadcast/m3u, /Broadcast/xmltv) and ChannelController (/Broadcast/Channel/Current, /Next, /Schedule, /Stream) had no [Authorize] attribute at all -- Jellyfin has no FallbackPolicy configured, so endpoints without an explicit [Authorize] are fully anonymous by default (confirmed live: real data returned, no api_key, no 401). Added the standard [Authorize] attribute Jellyfin's own controllers use, so these now correctly require an authenticated user. Existing M3U/XMLTV/Stream URLs (which already embed an api_key) are unaffected.",
         "targetAbi": "10.11.8.0",

@@ -1,7 +1,7 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.6.0"
+version: "0.2.6.1"
 targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
@@ -18,10 +18,10 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  Security fix: FeedController (/Broadcast/m3u, /Broadcast/xmltv) and ChannelController
-  (/Broadcast/Channel/Current, /Next, /Schedule, /Stream) had no [Authorize] attribute at all --
-  Jellyfin has no FallbackPolicy configured, so endpoints without an explicit [Authorize] are fully
-  anonymous by default (confirmed live against a real server: real data returned, no api_key, no 401).
-  Added the standard [Authorize] attribute Jellyfin's own controllers use, so these now correctly
-  require an authenticated user like every other Jellyfin API route. Existing M3U/XMLTV/Stream URLs
-  (which already embed an api_key) are unaffected.
+  Fix (actual root cause this time): the config page's <script> tag was a sibling AFTER the closing
+  </div> of the page's data-role="page" container, not a descendant of it. Jellyfin's web client
+  extracts content via querySelector('div[data-role="page"]') and only executes a script if it's
+  inside that extracted subtree -- a sibling script is silently dropped and never runs, regardless of
+  its own internal timing (which is why deferring to pageshow, running immediately, and polling all
+  had zero effect in earlier releases). Moved the script inside the page div. Also includes 0.2.6.0's
+  security fix: FeedController/ChannelController now require authentication (were fully anonymous).
