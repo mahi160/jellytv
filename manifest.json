@@ -9,8 +9,16 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.4.1",
+        "changelog": "Fix: the plugin package didn't include a meta.json assembly whitelist, so Jellyfin's plugin loader fell back to loading every *.dll found anywhere under the plugin folder -- including bundled native SQLite binaries under runtimes/**/*.dll (e.g. runtimes/win-arm/native/e_sqlite3.dll), which are not managed assemblies. Loading any one of those throws BadImageFormatException and disables the entire plugin ('Malfunctioned'). The package now whitelists only the real managed assemblies via meta.json. 0.2.4.0 is broken -- do not install it, use this version instead.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.4.1/Broadcast_0.2.4.1.zip",
+        "checksum": "08bf7e788c889640f472a75d3916574f",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.4.0",
-        "changelog": "Fix: regenerating the schedule (daily task, library changes, config saves) advanced each block's Active Series and inflated movie airing counts by a full schedule's worth every time, and cut off whatever was currently playing. Active Series/Cooldown history is now committed from what actually aired, and the currently-playing program is preserved across regeneration. Fix: a full library query ran per scheduled program instead of once per block, and movie history was queried per candidate per pick instead of once per run -- both are now cached/batched. Fix: a DST spring-forward could crash regeneration; overlapping Programming Blocks are now rejected at validation; the XMLTV guide was missing whatever's airing right now. Security: manual Regenerate now requires elevated privileges; the config page no longer embeds the admin's session token in the M3U/XMLTV/Stream URLs. Config page: block fields are now shown/hidden based on content type and ordering.",
+        "changelog": "BROKEN \u2014 do not install, use 0.2.4.1 instead (plugin loader disables this build with Malfunctioned status: no meta.json assembly whitelist, so it tries to load bundled native SQLite runtime binaries as managed assemblies). Fix: regenerating the schedule (daily task, library changes, config saves) advanced each block's Active Series and inflated movie airing counts by a full schedule's worth every time, and cut off whatever was currently playing. Active Series/Cooldown history is now committed from what actually aired, and the currently-playing program is preserved across regeneration. Fix: a full library query ran per scheduled program instead of once per block, and movie history was queried per candidate per pick instead of once per run -- both are now cached/batched. Fix: a DST spring-forward could crash regeneration; overlapping Programming Blocks are now rejected at validation; the XMLTV guide was missing whatever's airing right now. Security: manual Regenerate now requires elevated privileges; the config page no longer embeds the admin's session token in the M3U/XMLTV/Stream URLs. Config page: block fields are now shown/hidden based on content type and ordering.",
         "targetAbi": "10.11.8.0",
         "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.4.0/Broadcast_0.2.4.0.zip",
         "checksum": "095e97ef53586c19adfc8d092cb02ff5",
