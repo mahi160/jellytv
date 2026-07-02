@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.4.2",
+        "changelog": "Fix: the TimeZone autocomplete field's initialization code ran at script top-level instead of inside the pageshow handler (unlike every other DOM-touching part of the config page). In real dashboard load timing this threw before the rest of the script -- Programming Blocks table, Add Block button, copy-to-clipboard buttons, and the Save Channel Settings form handler -- ever got registered, silently breaking the entire config page. Deferred into pageshow and wrapped defensively.",
+        "targetAbi": "10.11.8.0",
+        "sourceUrl": "https://github.com/mahi160/jellytv/releases/download/v0.2.4.2/Broadcast_0.2.4.2.zip",
+        "checksum": "e206ad7aef90d235cc6c5171e9b57377",
+        "timestamp": "2026-07-02T00:00:00Z"
+      },
+      {
         "version": "0.2.4.1",
         "changelog": "Fix: the plugin package didn't include a meta.json assembly whitelist, so Jellyfin's plugin loader fell back to loading every *.dll found anywhere under the plugin folder -- including bundled native SQLite binaries under runtimes/**/*.dll (e.g. runtimes/win-arm/native/e_sqlite3.dll), which are not managed assemblies. Loading any one of those throws BadImageFormatException and disables the entire plugin ('Malfunctioned'). The package now whitelists only the real managed assemblies via meta.json. 0.2.4.0 is broken -- do not install it, use this version instead.",
         "targetAbi": "10.11.8.0",
