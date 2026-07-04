@@ -20,12 +20,13 @@ public class ScheduleCandidate
     /// <summary>Gets or sets the release date, if known (drives Chronological/NewestFirst/OldestFirst/Recency).</summary>
     public DateTime? ReleaseDate { get; set; }
 
-    /// <summary>Gets or sets the owning series' id. Null for movies.</summary>
+    /// <summary>Gets or sets the owning series' id. Null for movies; never null for episodes
+    /// (<see cref="BaseItemCandidateAdapter"/> drops episodes that can't be tracked).</summary>
     public Guid? SeriesId { get; set; }
 
-    /// <summary>Gets or sets the season number. Null for movies.</summary>
+    /// <summary>Gets or sets the season number. Null for movies; never null for episodes.</summary>
     public int? SeasonNumber { get; set; }
 
-    /// <summary>Gets or sets the episode number within the season. Null for movies.</summary>
+    /// <summary>Gets or sets the episode number within the season. Null for movies; never null for episodes.</summary>
     public int? EpisodeNumber { get; set; }
 }

@@ -75,7 +75,8 @@ public class ProgrammingBlock
     /// <summary>Gets or sets the daily start time (e.g. "19:00").</summary>
     public string StartTime { get; set; } = "00:00";
 
-    /// <summary>Gets or sets the daily end time (e.g. "23:00"). May be past midnight relative to StartTime.</summary>
+    /// <summary>Gets or sets the daily end time (e.g. "23:00"). May be past midnight relative to StartTime;
+    /// equal to StartTime means the block covers the full 24 hours (see <see cref="Scheduling.DailyWindow"/>).</summary>
     public string EndTime { get; set; } = "00:00";
 
     /// <summary>Gets or sets the Jellyfin library names to draw from. Empty = all libraries.</summary>
@@ -158,7 +159,8 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <returns>The default Programming Blocks.</returns>
     public static List<ProgrammingBlock> CreateDefaultBlocks() => new()
     {
-        new() { Name = "All Day Movies", StartTime = "00:00", EndTime = "23:59", ContentType = BlockContentType.Movie }
+        // 00:00–00:00 = the full 24 hours (a "23:59" end would leave a nightly one-minute dead-air gap).
+        new() { Name = "All Day Movies", StartTime = "00:00", EndTime = "00:00", ContentType = BlockContentType.Movie }
     };
 
     /// <summary>Gets or sets the channel's display name.</summary>

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Jellyfin.Plugin.Broadcast.Configuration;
 using Jellyfin.Plugin.Broadcast.Data;
@@ -130,12 +129,6 @@ public class ScheduleGenerator
         return programs;
     }
 
-    private static TimeSpan ParseTimeOfDay(string value) =>
-        TimeSpan.ParseExact(value, "hh\\:mm", CultureInfo.InvariantCulture);
-
-    private static bool WindowContains(TimeSpan start, TimeSpan end, TimeSpan t) =>
-        start <= end ? t >= start && t < end : t >= start || t < end;
-
     /// <summary>
     /// Converts a local wall-clock time to UTC, tolerating the DST spring-forward gap (which
     /// <see cref="TimeZoneInfo.ConvertTimeToUtc(DateTime, TimeZoneInfo)"/> throws on) by nudging the
@@ -161,7 +154,7 @@ public class ScheduleGenerator
     private static ProgrammingBlock? FindActiveBlock(IReadOnlyList<ProgrammingBlock> blocks, DateTime currentUtc, TimeZoneInfo timeZone)
     {
         var localTod = TimeZoneInfo.ConvertTimeFromUtc(currentUtc, timeZone).TimeOfDay;
-        return blocks.FirstOrDefault(b => WindowContains(ParseTimeOfDay(b.StartTime), ParseTimeOfDay(b.EndTime), localTod));
+        return blocks.FirstOrDefault(b => DailyWindow.Of(b).Contains(localTod));
     }
 
     private static DateTime FindNextBlockStart(IReadOnlyList<ProgrammingBlock> blocks, DateTime currentUtc, TimeZoneInfo timeZone)
@@ -170,7 +163,7 @@ public class ScheduleGenerator
         DateTime? best = null;
         foreach (var block in blocks)
         {
-            var candidate = local.Date + ParseTimeOfDay(block.StartTime);
+            var candidate = local.Date + DailyWindow.ParseTime(block.StartTime);
             if (candidate <= local)
             {
                 candidate = candidate.AddDays(1);
@@ -188,7 +181,7 @@ public class ScheduleGenerator
     private static DateTime NextBlockBoundary(ProgrammingBlock block, DateTime currentUtc, TimeZoneInfo timeZone)
     {
         var local = TimeZoneInfo.ConvertTimeFromUtc(currentUtc, timeZone);
-        var end = local.Date + ParseTimeOfDay(block.EndTime);
+        var end = local.Date + DailyWindow.ParseTime(block.EndTime);
         if (end <= local)
         {
             end = end.AddDays(1);

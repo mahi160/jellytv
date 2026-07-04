@@ -187,7 +187,14 @@
             page.querySelectorAll('.copyUrlButton').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var input = page.querySelector('#' + btn.getAttribute('data-target'));
-                    navigator.clipboard.writeText(input.value);
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(input.value);
+                    } else {
+                        // navigator.clipboard only exists in secure contexts — plain-http LAN Jellyfin
+                        // (the common self-hosted setup) needs the legacy select+execCommand path.
+                        input.select();
+                        document.execCommand('copy');
+                    }
                 });
             });
 

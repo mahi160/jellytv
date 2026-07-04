@@ -134,6 +134,30 @@ public class BlockValidatorTests
     }
 
     [Fact]
+    public void Validate_AcceptsFullDayBlock_EqualStartAndEnd()
+    {
+        var block = new ProgrammingBlock { Name = "All Day", StartTime = "00:00", EndTime = "00:00" };
+
+        var (valid, invalid) = BlockValidator.Validate(new[] { block });
+
+        Assert.Single(valid);
+        Assert.Empty(invalid);
+    }
+
+    [Fact]
+    public void Validate_FullDayBlock_OverlapsEverything()
+    {
+        var allDay = new ProgrammingBlock { Name = "All Day", StartTime = "06:00", EndTime = "06:00" };
+        var evening = new ProgrammingBlock { Name = "Evening", StartTime = "19:00", EndTime = "23:00" };
+
+        var (valid, invalid) = BlockValidator.Validate(new[] { allDay, evening });
+
+        Assert.Single(valid);
+        Assert.Equal("All Day", valid[0].Name);
+        Assert.Single(invalid);
+    }
+
+    [Fact]
     public void Validate_RejectsMidnightWrappingOverlap()
     {
         var lateNight = new ProgrammingBlock { Name = "Late Night", StartTime = "23:00", EndTime = "02:00" };

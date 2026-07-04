@@ -29,11 +29,9 @@ public class ScheduleGeneratorTests : IDisposable
 
     public void Dispose() => Directory.Delete(_tempDir, true);
 
-    private static ProgrammingBlock MovieBlock(string name = "Prime Time", string start = "00:00", string end = "24:00", int cooldownDays = 30, OrderingStrategy order = OrderingStrategy.Sequential) =>
-        new() { Name = name, StartTime = FixMidnight(start), EndTime = FixMidnight(end), ContentType = BlockContentType.Movie, MovieCooldownDays = cooldownDays, Order = order };
-
-    // ScheduleGenerator parses "HH:mm" strictly; represent "end of day" as "23:59" to keep test blocks simple.
-    private static string FixMidnight(string value) => value == "24:00" ? "23:59" : value;
+    // StartTime == EndTime means the full 24 hours (see DailyWindow).
+    private static ProgrammingBlock MovieBlock(string name = "Prime Time", string start = "00:00", string end = "00:00", int cooldownDays = 30, OrderingStrategy order = OrderingStrategy.Sequential) =>
+        new() { Name = name, StartTime = start, EndTime = end, ContentType = BlockContentType.Movie, MovieCooldownDays = cooldownDays, Order = order };
 
     [Fact]
     public void Generate_FillsWindowSequentially_UsingItemDurations()
@@ -107,7 +105,7 @@ public class ScheduleGeneratorTests : IDisposable
     public void EmptyPool_SkipsPastBlockWithoutInfiniteLoop()
     {
         var blockA = new ProgrammingBlock { Name = "Empty", StartTime = "00:00", EndTime = "12:00", ContentType = BlockContentType.Movie };
-        var blockB = MovieBlock(name: "Filled", start: "12:00", end: "23:59");
+        var blockB = MovieBlock(name: "Filled", start: "12:00", end: "00:00");
         var filler = new ScheduleCandidate { ItemId = Guid.NewGuid(), Duration = TimeSpan.FromHours(1) };
 
         var generator = new ScheduleGenerator(_movieHistory, _episodeState, new Random(1));
@@ -145,6 +143,24 @@ public class ScheduleGeneratorTests : IDisposable
         var programs = generator.Generate(Day1, Day1.AddMinutes(90), Utc, new[] { block }, _ => pool);
 
         Assert.Equal(new[] { pool[0].ItemId, pool[1].ItemId, pool[0].ItemId }, programs.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void FullDayBlock_CoversMidnight_WithNoDeadAirGap()
+    {
+        // A 00:00–00:00 block is the full 24 hours — the schedule must be contiguous across midnight
+        // (a 23:59 end used to leave a nightly one-minute hole where nothing aired).
+        var block = MovieBlock(cooldownDays: 0);
+        var pool = new[] { new ScheduleCandidate { ItemId = Guid.NewGuid(), Duration = TimeSpan.FromHours(1) } };
+
+        var generator = new ScheduleGenerator(_movieHistory, _episodeState, new Random(1));
+        var programs = generator.Generate(Day1, Day1.AddDays(2), Utc, new[] { block }, _ => pool);
+
+        Assert.Equal(48, programs.Count);
+        for (var i = 1; i < programs.Count; i++)
+        {
+            Assert.Equal(programs[i - 1].EndUtc, programs[i].StartUtc);
+        }
     }
 
     [Fact]

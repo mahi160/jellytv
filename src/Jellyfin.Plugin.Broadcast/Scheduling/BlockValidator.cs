@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Jellyfin.Plugin.Broadcast.Configuration;
 
@@ -76,8 +75,7 @@ public static class BlockValidator
         return null;
     }
 
-    private static bool IsValidTimeOfDay(string value) =>
-        TimeSpan.TryParseExact(value, "hh\\:mm", CultureInfo.InvariantCulture, out _);
+    private static bool IsValidTimeOfDay(string value) => DailyWindow.TryParseTime(value, out _);
 
     /// <summary>
     /// Two blocks whose daily windows overlap would make <c>ScheduleGenerator.FindActiveBlock</c> silently
@@ -86,15 +84,11 @@ public static class BlockValidator
     /// </summary>
     private static string? GetOverlapReason(ProgrammingBlock block, IReadOnlyList<ProgrammingBlock> alreadyValid)
     {
-        var start = TimeSpan.ParseExact(block.StartTime, "hh\\:mm", CultureInfo.InvariantCulture);
-        var end = TimeSpan.ParseExact(block.EndTime, "hh\\:mm", CultureInfo.InvariantCulture);
+        var window = DailyWindow.Of(block);
 
         foreach (var other in alreadyValid)
         {
-            var otherStart = TimeSpan.ParseExact(other.StartTime, "hh\\:mm", CultureInfo.InvariantCulture);
-            var otherEnd = TimeSpan.ParseExact(other.EndTime, "hh\\:mm", CultureInfo.InvariantCulture);
-
-            if (WindowsOverlap(start, end, otherStart, otherEnd))
+            if (window.Overlaps(DailyWindow.Of(other)))
             {
                 return $"'{block.Name}' ({block.StartTime}-{block.EndTime}) overlaps '{other.Name}' ({other.StartTime}-{other.EndTime}) — the earlier block always wins, so the later one would never air.";
             }
@@ -102,12 +96,4 @@ public static class BlockValidator
 
         return null;
     }
-
-    // Two (possibly midnight-wrapping) daily windows overlap iff either one's start falls strictly
-    // inside the other — same containment rule ScheduleGenerator.WindowContains uses for point lookups.
-    private static bool WindowsOverlap(TimeSpan aStart, TimeSpan aEnd, TimeSpan bStart, TimeSpan bEnd) =>
-        Contains(aStart, aEnd, bStart) || Contains(bStart, bEnd, aStart);
-
-    private static bool Contains(TimeSpan start, TimeSpan end, TimeSpan t) =>
-        start <= end ? t >= start && t < end : t >= start || t < end;
 }
