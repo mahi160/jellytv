@@ -1,7 +1,7 @@
 ---
 name: "Broadcast"
 guid: "a7e6f0d2-3c1e-4b7a-9f0a-1d2c3e4f5a6b"
-version: "0.2.6.1"
+version: "0.2.6.2"
 targetAbi: "10.11.8.0"
 framework: "net9.0"
 overview: "Turns your Jellyfin library into a single always-on TV channel"
@@ -18,10 +18,11 @@ artifacts:
 - "SQLitePCLRaw.provider.e_sqlite3.dll"
 - "runtimes/**"
 changelog: >
-  Fix (actual root cause this time): the config page's <script> tag was a sibling AFTER the closing
-  </div> of the page's data-role="page" container, not a descendant of it. Jellyfin's web client
-  extracts content via querySelector('div[data-role="page"]') and only executes a script if it's
-  inside that extracted subtree -- a sibling script is silently dropped and never runs, regardless of
-  its own internal timing (which is why deferring to pageshow, running immediately, and polling all
-  had zero effect in earlier releases). Moved the script inside the page div. Also includes 0.2.6.0's
-  security fix: FeedController/ChannelController now require authentication (were fully anonymous).
+  Three fixes. (1) Schedule regeneration crashed on any Episode block whose library contains episodes
+  without season/episode numbers or a series id (specials, extras, unmatched files) -- the Active
+  Series cursor dereferenced those nulls, killing the whole regeneration and leaving an empty schedule
+  (404 on Current, empty guide, dead stream). Such episodes are now excluded from the pool. (2) The
+  default block ended at 23:59, leaving a nightly one-minute dead-air gap where nothing aired;
+  StartTime == EndTime now means a full 24-hour block and the default is 00:00-00:00. (3) The config
+  page's Copy buttons did nothing over plain http (navigator.clipboard requires a secure context) --
+  added a fallback.
